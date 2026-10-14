@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 990" font-family="DejaVu Sans, sans-serif">
+<rect width="1240" height="990" fill="#0d1117"/>
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker></defs>
+<text x="620" y="50" font-size="30" fill="#e6edf3" text-anchor="middle" font-weight="bold" >DGX Vitals — how a run works</text>
+<text x="620" y="80" font-size="15" fill="#9da7b3" text-anchor="middle" font-weight="normal" >One script. Six checks per host. One evidence folder per host.</text>
+<rect x="470" y="102" width="300" height="46" rx="23" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+<text x="620" y="131" font-size="17" fill="#e6edf3" text-anchor="middle" font-weight="bold" >You run dgx-vitals.py</text>
+<line x1="620" y1="148" x2="620" y2="168" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="240" y="172" width="760" height="58" rx="10" fill="#161b22" stroke="#d2a83c" stroke-width="1.6"/>
+<text x="620" y="197" font-size="16" fill="#d2a83c" text-anchor="middle" font-weight="bold" >STEP 0 — recommended first: add  --dry-run</text>
+<text x="620" y="219" font-size="14" fill="#9da7b3" text-anchor="middle" font-weight="normal" >Prints the exact plan for every host. Touches nothing.</text>
+<line x1="620" y1="230" x2="620" y2="250" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="240" y="254" width="760" height="96" rx="10" fill="#161b22" stroke="#8b949e" stroke-width="1.6"/>
+<text x="620" y="280" font-size="16" fill="#e6edf3" text-anchor="middle" font-weight="bold" >Pick how you run it</text>
+<rect x="256" y="292" width="240" height="44" rx="8" fill="#21262d" stroke="#8b949e" stroke-width="1.6"/>
+<text x="376" y="310" font-size="13" fill="#58a6ff" text-anchor="middle" font-weight="bold" >MANY HOSTS</text>
+<text x="376" y="328" font-size="12" fill="#9da7b3" text-anchor="middle" font-weight="normal" >laptop + hosts.csv file</text>
+<rect x="500" y="292" width="240" height="44" rx="8" fill="#21262d" stroke="#8b949e" stroke-width="1.6"/>
+<text x="620" y="310" font-size="13" fill="#58a6ff" text-anchor="middle" font-weight="bold" >ONE HOST</text>
+<text x="620" y="328" font-size="12" fill="#9da7b3" text-anchor="middle" font-weight="normal" >laptop + --host flag</text>
+<rect x="744" y="292" width="240" height="44" rx="8" fill="#21262d" stroke="#8b949e" stroke-width="1.6"/>
+<text x="864" y="310" font-size="13" fill="#58a6ff" text-anchor="middle" font-weight="bold" >ON THE BOX ITSELF</text>
+<text x="864" y="328" font-size="12" fill="#9da7b3" text-anchor="middle" font-weight="normal" >copy script over, --local</text>
+<line x1="620" y1="350" x2="620" y2="370" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="240" y="374" width="760" height="262" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+<text x="620" y="402" font-size="16" fill="#e6edf3" text-anchor="middle" font-weight="bold" >For each host — in parallel, and safe to re-run</text>
+<text x="620" y="424" font-size="13" fill="#9da7b3" text-anchor="middle" font-weight="normal" >Finished hosts are skipped next time. The FULLLOG is written as it goes.</text>
+<rect x="264" y="438" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
+<text x="284" y="457" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold" >1</text>
+<text x="308" y="457" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal" >cat /etc/dgx-release — DGX software version</text>
+<rect x="264" y="470" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
+<text x="284" y="489" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold" >2</text>
+<text x="308" y="489" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal" >sudo nvsm show health — overall system health</text>
+<rect x="264" y="502" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
+<text x="284" y="521" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold" >3</text>
+<text x="308" y="521" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal" >nvidia-smi -q — full GPU report (checks all 8 GPUs)</text>
+<rect x="264" y="534" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
+<text x="284" y="553" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold" >4</text>
+<text x="308" y="553" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal" >nvidia-smi topo -m — NVLink fabric map</text>
+<rect x="264" y="566" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
+<text x="284" y="585" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold" >5</text>
+<text x="308" y="585" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal" >sudo nvsm stress-test — the long one (30–60 min)</text>
+<rect x="264" y="598" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
+<text x="284" y="617" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold" >6</text>
+<text x="308" y="617" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal" >sudo nvsm dump health — final health snapshot</text>
+<line x1="620" y1="636" x2="620" y2="656" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="240" y="660" width="372" height="74" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+<text x="426" y="686" font-size="16" fill="#3fb950" text-anchor="middle" font-weight="bold" >ALL SIX PASS</text>
+<text x="426" y="710" font-size="13.5" fill="#9da7b3" text-anchor="middle" font-weight="normal" >green HEALTHY card for the folder</text>
+<rect x="628" y="660" width="372" height="74" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+<text x="814" y="686" font-size="16" fill="#f85149" text-anchor="middle" font-weight="bold" >ANYTHING FAILS</text>
+<text x="814" y="710" font-size="13.5" fill="#9da7b3" text-anchor="middle" font-weight="normal" >red NOT HEALTHY card + details in the log</text>
+<line x1="620" y1="734" x2="620" y2="754" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="240" y="758" width="760" height="50" rx="10" fill="#161b22" stroke="#8b949e" stroke-width="1.6"/>
+<text x="620" y="779" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal" >The stress test's own log file (StressTestLog*.nvsmlog)</text>
+<text x="620" y="799" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal" >is copied into the host's folder automatically.</text>
+<line x1="620" y1="808" x2="620" y2="828" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="240" y="832" width="760" height="50" rx="10" fill="#161b22" stroke="#8b949e" stroke-width="1.6"/>
+<text x="620" y="853" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal" >One row per host lands in summary.csv — shaped like the tracker:</text>
+<text x="620" y="873" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal" >Complete / Failed per check, plus a % Complete column.</text>
+<line x1="620" y1="882" x2="620" y2="902" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="400" y="906" width="440" height="46" rx="23" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+<text x="620" y="935" font-size="17" fill="#3fb950" text-anchor="middle" font-weight="bold" >Evidence ready to file</text>
+</svg>

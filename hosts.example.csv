@@ -1,0 +1,4 @@
+hostname,address,user
+dgx-node-01,10.0.0.51,ubuntu
+dgx-node-02,10.0.0.52,ubuntu
+dgx-node-03,dgx-node-03.tailnet-name.ts.net,ubuntu
