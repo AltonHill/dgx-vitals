@@ -1,6 +1,8 @@
 # DGX Vitals
 
-**Takes a DGX's vitals.** One script runs the six standard DGX validation
+*Family nickname: **mimirs-test** — the Mimir family's validation runner.*
+
+**Takes a DGX's vitals.** One script runs the standard DGX validation
 checks on one machine — or a whole fleet over SSH — and files the evidence
 for you: a full log, a health card, and a tracker-ready summary. No manual
 SSH sessions, no screenshots, no typing results into a spreadsheet.
@@ -51,16 +53,29 @@ straight into the install tracker.
 
 ![Sample health card](docs/sample-health-card.png)
 
-## The six checks
+## The checks
 
-| # | Check | What it does |
-|---|-------|--------------|
-| 1 | DGX Release | Reads the DGX software version |
-| 2 | NVSM Show Health | Overall system health report |
-| 3 | NVIDIA-SMI Query | Full GPU report — verifies all GPUs are present |
-| 4 | NVLink Topology | Maps the NVLink fabric between GPUs |
-| 5 | NVSM Stress Test | Stresses the system (this is the long one — 30 to 60 minutes) |
-| 6 | NVSM Dump Health | Final health snapshot |
+Which checks run depends on the **profile** — `--profile dgx` (the
+default) or `--profile hgx`:
+
+| # | Check | What it does | DGX | HGX |
+|---|-------|--------------|:---:|:---:|
+| 1 | Release | DGX software version (plain OS version on HGX) | ✓ | ✓ |
+| 2 | NVSM Show Health | Overall system health report | ✓ | — |
+| 3 | NVIDIA-SMI Query | Full GPU report — verifies all GPUs are present | ✓ | ✓ |
+| 4 | NVLink Topology | Maps the NVLink fabric between GPUs | ✓ | ✓ |
+| 5 | NCCL Tests | Runs NVIDIA's NCCL test suite across all GPUs — the fabric, proven under load. Fails on any correctness error | ✓ | ✓ |
+| 6 | NVSM Stress Test | Stresses the system (this is the long one — 30 to 60 minutes) | ✓ | — |
+| 7 | NVSM Dump Health | Final health snapshot | ✓ | — |
+
+NVSM is DGX-only software, so on HGX systems the NCCL run carries the
+fabric proof. The NCCL step runs a small suite — **all-reduce,
+all-gather, reduce-scatter** (the collectives real training traffic is
+made of) — and reports peak bus bandwidth per test. It needs MPI and
+the NCCL tests provisioned on the host (the `*_perf` binaries on the
+PATH, or `--nccl-dir` pointing at them); if they're missing, the step
+says so plainly instead of failing mysteriously. Choose a different
+suite with `--nccl-tests all_reduce` and friends.
 
 ## Before you start
 
@@ -161,11 +176,16 @@ a finished log are skipped; the run picks up where it left off. Add
 | `--dry-run` | Print the plan and sample output — touches nothing |
 | `--jobs 8` | Check 8 hosts at a time (default 4) |
 | `--only stress` | Run just one check (handy for a stress-test redo) |
+| `--tail` | Watch each step's output on screen as it happens (best for one host or a few) |
 | `--sudo-password` | Ask for the hosts' sudo password once, if they need one |
 | `--stress-timeout 5400` | How long the stress test may run, in seconds (default fits a 60-minute test) |
 | `--health-timeout 1800` | Time limit for NVSM Show Health, in seconds (it can take 15–20) |
 | `--dump-timeout 1800` | Time limit for NVSM Dump Health, in seconds |
 | `--force` | Redo hosts that already finished |
+| `--profile hgx` | HGX systems: NCCL + nvidia-smi checks only (no NVSM) |
+| `--nccl-min-busbw 400` | Also fail the NCCL check if peak bus bandwidth is under this many GB/s (default: correctness only) |
+| `--nccl-dir /path/to/tests` | Folder holding the `*_perf` binaries, if they aren't on the PATH |
+| `--nccl-tests all_reduce` | Run a different NCCL suite (default: all_reduce, all_gather, reduce_scatter) |
 
 ## If something goes wrong
 

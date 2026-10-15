@@ -1,0 +1,3 @@
+#!/bin/bash
+# stub: skip mpirun flags, exec the test binary with its own args
+while [ $# -gt 0 ]; do case "$1" in *_perf) b="$1"; shift; exec "$b" "$@";; *) shift;; esac; done

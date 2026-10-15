@@ -1,0 +1,7 @@
+#!/bin/bash
+echo "#          size         count      type   redop    root     time   algbw   busbw #wrong"
+echo "    2147483648     536870912     float     sum      -1   9780.2  219.57  388.20      ${NCCL_WRONG:-0}"
+echo "    2147483648     536870912     float     sum      -1   9744.0  220.38  389.05      ${NCCL_WRONG:-0}"
+echo "# Out of bounds values : ${NCCL_OOB:-0} OK"
+echo "# Avg bus bandwidth    : 289.4"
+exit 0

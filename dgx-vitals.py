@@ -15,6 +15,10 @@ Modes:
     --host NAME [--address A]   run against a single host over SSH
     --hosts hosts.csv       fan out over SSH to many hosts (CSV columns:
                             hostname,address[,user])
+    --profile dgx|hgx       dgx (default): NVSM + NCCL + nvidia-smi.
+                            hgx: NCCL + nvidia-smi only — NVSM and
+                            /etc/dgx-release are DGX-only, so on HGX the
+                            NCCL all-reduce carries the fabric proof.
     --dry-run               with any mode: execute nothing. Prints the plan
                             (exact commands, in order, per host) and writes
                             the same artifacts stamped DRY RUN, so anyone
@@ -36,16 +40,25 @@ import getpass
 import os
 import re
 import shlex
+import selectors
 import shutil
 import struct
 import subprocess
 import sys
+import threading
 import time
 import zlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
-VERSION = "1.2"
+VERSION = "1.4"
+
+_PRINT_LOCK = threading.Lock()
+
+
+def _say(msg):
+    with _PRINT_LOCK:
+        print(msg, flush=True)
 
 # --------------------------------------------------------------------------
 # Tiny 4x5 bitmap font + pure-stdlib PNG writer (for the health card).
@@ -158,34 +171,124 @@ class Step:
         return ("sudo " if self.sudo else "") + shlex.join(self.argv)
 
 
-def build_steps(stress_timeout, health_timeout=1800, dump_timeout=1800):
+def build_steps(profile, stress_timeout, health_timeout=1800, dump_timeout=1800,
+                nccl_timeout=2700, nccl_tests=("all_reduce", "all_gather",
+                                               "reduce_scatter"),
+                nccl_dir="", nccl_mpirun="mpirun", gpus=8):
     # Defaults sized from field timings: nvsm show health 15-20 min,
     # stress-test 30-60 min, nvsm dump health ~10+ min — all get headroom.
-    return [
-        Step("dgx-release", "DGX Release", ["cat", "/etc/dgx-release"], timeout=60),
-        Step("nvsm-health", "NVSM Show Health", ["nvsm", "show", "health"],
-             sudo=True, timeout=health_timeout),
+    # Profiles: dgx = NVSM + NCCL + smi (DGX Quickstart; DGX nodes anywhere);
+    # hgx = NCCL + smi only — NVSM and /etc/dgx-release are DGX-only, so on
+    # HGX the NCCL run carries the fabric proof.
+    steps = [Step("dgx-release", "DGX Release", ["cat", "/etc/dgx-release"],
+                  timeout=60)] if profile == "dgx" else \
+            [Step("os-release", "OS Release", ["cat", "/etc/os-release"],
+                  timeout=60)]
+    if profile == "dgx":
+        steps.append(Step("nvsm-health", "NVSM Show Health",
+                          ["nvsm", "show", "health"],
+                          sudo=True, timeout=health_timeout))
+    steps += [
         Step("smi-query", "NVIDIA-SMI Query", ["nvidia-smi", "-q"], timeout=600),
         Step("topo", "NVLink Topology", ["nvidia-smi", "topo", "-m"], timeout=300),
-        Step("stress", "NVSM Stress Test", ["nvsm", "stress-test"],
-             sudo=True, timeout=stress_timeout),
-        Step("dump", "NVSM Dump Health", ["nvsm", "dump", "health"],
-             sudo=True, timeout=dump_timeout),
+        Step("nccl", "NCCL Tests",
+             ["sh", "-c", _nccl_script(nccl_tests, nccl_mpirun, nccl_dir, gpus)],
+             timeout=nccl_timeout),
     ]
+    if profile == "dgx":
+        steps += [
+            Step("stress", "NVSM Stress Test", ["nvsm", "stress-test"],
+                 sudo=True, timeout=stress_timeout),
+            Step("dump", "NVSM Dump Health", ["nvsm", "dump", "health"],
+                 sudo=True, timeout=dump_timeout),
+        ]
+    return steps
 
 
-def verdict(step, rc, out, expected_gpus):
+def _nccl_script(tests, mpirun, bin_dir, gpus):
+    """One shell line that runs each NCCL perf test in turn, with section
+    markers and per-test exit codes the verdict parser can attribute."""
+    parts = []
+    for name in tests:
+        binary = f"{bin_dir}/{name}_perf" if bin_dir else f"{name}_perf"
+        parts.append(
+            f"echo '===== {name}_perf ====='; "
+            f"{mpirun} --allow-run-as-root -np {gpus} {binary} "
+            f"-b 8M -e 2G -f 2 -g 1; "
+            f"echo '[{name}_perf exit '$?']'")
+    return "; ".join(parts)
+
+
+def verdict(step, rc, out, expected_gpus, nccl_min_busbw=0.0):
     """Return (ok, note). Conservative rules; the FULLLOG always carries the
     raw output so a human can override any heuristic."""
     text = out or ""
     low = text.lower()
     if rc != 0:
+        if step.slug == "nccl" and rc == 127 and "=====" not in out:
+            return False, ("mpirun or all_reduce_perf not found — "
+                           "NCCL tests not provisioned on this host")
         return False, f"exit code {rc}"
     if step.slug == "dgx-release":
         if not text.strip():
             return False, "empty /etc/dgx-release"
         first = next((ln.strip() for ln in text.splitlines() if ln.strip()), "")
         return True, first[:80]
+    if step.slug == "os-release":
+        if not text.strip():
+            return False, "empty /etc/os-release"
+        pretty = next((ln.split("=", 1)[1].strip().strip('"')
+                       for ln in text.splitlines()
+                       if ln.startswith("PRETTY_NAME=")), "")
+        first = next((ln.strip() for ln in text.splitlines() if ln.strip()), "")
+        return True, (pretty or first)[:80]
+    if step.slug == "nccl":
+        sections = re.split(r"===== (\w+_perf) =====", text)
+        if len(sections) < 3:
+            return False, "no NCCL test sections found in output"
+        fails, peaks = [], {}
+        for i in range(1, len(sections), 2):
+            name, body = sections[i], sections[i + 1]
+            short = name.replace("_perf", "")
+            ex = re.search(r"\[%s exit (\d+)\]" % re.escape(name), body)
+            if not ex:
+                fails.append(f"{short}: no result (missing or crashed)")
+                continue
+            if int(ex.group(1)) != 0:
+                fails.append(f"{short}: exit {ex.group(1)}"
+                             + (" — not provisioned" if ex.group(1) == "127"
+                                else ""))
+                continue
+            oob = re.search(r"# Out of bounds values\s*:\s*(\d+)", body)
+            if not oob:
+                fails.append(f"{short}: unparseable output")
+                continue
+            if int(oob.group(1)) != 0:
+                fails.append(f"{short}: {oob.group(1)} out-of-bounds values"
+                             " — correctness FAILED")
+                continue
+            peak, wrong = 0.0, False
+            for ln in body.splitlines():
+                toks = ln.split()
+                if len(toks) >= 9 and toks[0].isdigit():
+                    if toks[-1].isdigit() and int(toks[-1]) != 0:
+                        wrong = True
+                    try:
+                        peak = max(peak, float(toks[-2]))
+                    except ValueError:
+                        pass
+            if wrong:
+                fails.append(f"{short}: nonzero #wrong — correctness FAILED")
+                continue
+            peaks[short] = peak
+        if fails:
+            return False, "; ".join(fails)
+        if (nccl_min_busbw and peaks.get("all_reduce") is not None
+                and peaks["all_reduce"] < nccl_min_busbw):
+            return False, (f"all_reduce peak {peaks['all_reduce']:.0f} GB/s "
+                           f"below floor {nccl_min_busbw:.0f} GB/s")
+        return True, "peak busbw GB/s: " + ", ".join(
+            f"{k} {v:.0f}" for k, v in peaks.items())
     if step.slug == "nvsm-health":
         bad = [w for w in ("unhealthy", "critical", "fatal") if w in low]
         if bad:
@@ -219,7 +322,7 @@ class LocalRunner:
     name = "local"
     dry = False
 
-    def run(self, argv, timeout, sudo=False, sudo_password=None):
+    def run(self, argv, timeout, sudo=False, sudo_password=None, stream=None):
         cmd = list(argv)
         stdin_data = None
         if sudo and os.geteuid() != 0:
@@ -228,7 +331,7 @@ class LocalRunner:
                 stdin_data = sudo_password + "\n"
             else:
                 cmd = ["sudo", "-n"] + cmd
-        return _exec(cmd, timeout, stdin_data)
+        return _exec(cmd, timeout, stdin_data, stream)
 
     def fetch(self, remote_path, dest_path):
         shutil.copyfile(remote_path, dest_path)
@@ -247,7 +350,7 @@ class SSHRunner:
         if batch:
             self.opts += ["-o", "BatchMode=yes"]
 
-    def run(self, argv, timeout, sudo=False, sudo_password=None):
+    def run(self, argv, timeout, sudo=False, sudo_password=None, stream=None):
         remote = list(argv)
         stdin_data = None
         if sudo:
@@ -257,7 +360,7 @@ class SSHRunner:
             else:
                 remote = ["sudo", "-n"] + remote
         cmd = ["ssh"] + self.opts + [self.target, shlex.join(remote)]
-        return _exec(cmd, timeout, stdin_data)
+        return _exec(cmd, timeout, stdin_data, stream)
 
     def fetch(self, remote_path, dest_path):
         cmd = ["scp"] + self.opts + [f"{self.target}:{remote_path}", dest_path]
@@ -274,15 +377,21 @@ class DryRunner:
     def __init__(self, inner):
         self.inner = inner
 
-    def run(self, argv, timeout, sudo=False, sudo_password=None):
+    def run(self, argv, timeout, sudo=False, sudo_password=None, stream=None):
         shown = ("sudo " if sudo else "") + shlex.join(argv)
-        return 0, f"[dry-run] would run: {shown}\n[dry-run] no host was contacted", 0.0
+        text = f"[dry-run] would run: {shown}\n[dry-run] no host was contacted"
+        if stream:
+            for ln in text.splitlines():
+                stream(ln)
+        return 0, text, 0.0
 
     def fetch(self, remote_path, dest_path):
         raise OSError("dry-run: no fetch")
 
 
-def _exec(cmd, timeout, stdin_data):
+def _exec(cmd, timeout, stdin_data, stream=None):
+    if stream is not None:
+        return _exec_stream(cmd, timeout, stdin_data, stream)
     start = time.time()
     try:
         p = subprocess.run(cmd, input=stdin_data, capture_output=True,
@@ -297,6 +406,62 @@ def _exec(cmd, timeout, stdin_data):
         return 127, f"[command not found: {cmd[0]}]", time.time() - start
     except Exception as e:  # never let one host kill the run
         return 1, f"[runner error: {e}]", time.time() - start
+
+
+def _exec_stream(cmd, timeout, stdin_data, stream):
+    """Streaming variant: lines are handed to `stream` as they arrive
+    (stderr merged into stdout, terminal-style) while the full text is
+    still accumulated for the FULLLOG. Timeout enforced via select."""
+    start = time.time()
+    try:
+        p = subprocess.Popen(cmd,
+                             stdin=subprocess.PIPE if stdin_data else None,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+    except FileNotFoundError:
+        return 127, f"[command not found: {cmd[0]}]", time.time() - start
+    except Exception as e:
+        return 1, f"[runner error: {e}]", time.time() - start
+    if stdin_data:
+        try:
+            p.stdin.write(stdin_data.encode())
+            p.stdin.close()
+        except (BrokenPipeError, OSError):
+            pass
+    sel = selectors.DefaultSelector()
+    sel.register(p.stdout, selectors.EVENT_READ)
+    chunks, buf = [], ""
+    killed = False
+    while True:
+        if time.time() - start > timeout:
+            p.kill()
+            killed = True
+            break
+        if not sel.select(timeout=0.5):
+            if p.poll() is not None:
+                break
+            continue
+        data = os.read(p.stdout.fileno(), 65536)
+        if not data:
+            break
+        text = data.decode(errors="replace")
+        chunks.append(text)
+        buf += text
+        while "\n" in buf:
+            line, buf = buf.split("\n", 1)
+            stream(line)
+    if buf:
+        stream(buf)
+    try:
+        rc = p.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        p.kill()
+        rc = p.wait()
+    out = "".join(chunks)
+    if killed:
+        out += f"\n[TIMEOUT after {timeout}s]"
+        rc = 124
+    return rc, out, time.time() - start
 
 # --------------------------------------------------------------------------
 # Per-host run
@@ -335,7 +500,7 @@ def print_plan(hostname, runner_desc, steps, host_dir):
 
 
 def run_host(hostname, runner, out_root, steps, expected_gpus,
-             sudo_password=None, force=False):
+             sudo_password=None, force=False, nccl_min_busbw=0.0, tail=False):
     host_dir = os.path.join(out_root, hostname)
     os.makedirs(host_dir, exist_ok=True)
     fulllog_path = os.path.join(host_dir, f"{hostname}-FULLLOG.txt")
@@ -362,21 +527,22 @@ def run_host(hostname, runner, out_root, steps, expected_gpus,
 
     n_pass = 0
     for i, step in enumerate(steps, 1):
-        print(f"  [{hostname}] step {i}/{len(steps)}: {step.label} ...",
-              flush=True)
+        _say(f"  [{hostname}] step {i}/{len(steps)}: {step.label} ...")
+        stream = (lambda ln: _say(f"  [{hostname}] | {ln}")) if tail else None
         rc, out, dur = runner.run(step.argv, step.timeout,
-                                  sudo=step.sudo, sudo_password=sudo_password)
+                                  sudo=step.sudo, sudo_password=sudo_password,
+                                  stream=stream)
         if dry:
             ok, note = None, "dry-run"
         else:
-            ok, note = verdict(step, rc, out, expected_gpus)
+            ok, note = verdict(step, rc, out, expected_gpus, nccl_min_busbw)
         n_pass += 1 if ok else 0
         result["steps"][step.slug] = (ok, note)
         if step.slug == "dgx-release" and ok:
             result["release"] = note
         state = "DRY" if ok is None else ("PASS" if ok else "FAIL")
-        print(f"  [{hostname}] step {i}/{len(steps)}: {step.label} — "
-              f"{state} ({dur:.0f}s)", flush=True)
+        _say(f"  [{hostname}] step {i}/{len(steps)}: {step.label} — "
+             f"{state} ({dur:.0f}s)")
         transcript.append(f"\n[{i}/{len(steps)}] {step.shown()}")
         transcript.append("-" * 72)
         transcript.append(out.rstrip())
@@ -457,24 +623,30 @@ def read_hosts(path):
     return hosts
 
 
-STEP_COLUMNS = ["DGX Release", "NVSM Health", "NVIDIA-SMI Query",
-                "NVLink Topology", "NVSM Stress Test", "NVSM Dump Health"]
-SLUG_ORDER = ["dgx-release", "nvsm-health", "smi-query", "topo", "stress", "dump"]
+SUMMARY_COLUMNS = [("Release", ["dgx-release", "os-release"]),
+                   ("NVSM Health", ["nvsm-health"]),
+                   ("NVIDIA-SMI Query", ["smi-query"]),
+                   ("NVLink Topology", ["topo"]),
+                   ("NCCL Tests", ["nccl"]),
+                   ("NVSM Stress Test", ["stress"]),
+                   ("NVSM Dump Health", ["dump"])]
 
 
 def write_summary(path, results, steps_by_slug):
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["Hostname"] + STEP_COLUMNS + ["% Complete", "Overall", "Notes"])
+        w.writerow(["Hostname"] + [h for h, _ in SUMMARY_COLUMNS]
+                   + ["% Complete", "Overall", "Notes"])
         for r in results:
             row = [r["hostname"]]
-            for slug in SLUG_ORDER:
-                if slug in r["steps"]:
-                    ok = r["steps"][slug][0]
-                    row.append("Dry Run" if ok is None else
-                               ("Complete" if ok else "Failed"))
-                else:
-                    row.append("")
+            for _h, slugs in SUMMARY_COLUMNS:
+                cell = ""
+                for slug in slugs:
+                    if slug in r["steps"]:
+                        ok = r["steps"][slug][0]
+                        cell = ("Dry Run" if ok is None else
+                                ("Complete" if ok else "Failed"))
+                row.append(cell)
             row.append(r.get("pct", ""))
             row.append(r["overall"])
             notes = "; ".join(r["notes"])
@@ -494,6 +666,19 @@ def main():
     ap.add_argument("--out", default="validation-output", help="output root dir")
     ap.add_argument("--jobs", type=int, default=4, help="parallel SSH workers")
     ap.add_argument("--gpus", type=int, default=8, help="expected GPU count")
+    ap.add_argument("--profile", choices=["dgx", "hgx"], default="dgx",
+                    help="dgx = NVSM + NCCL + smi (default); "
+                         "hgx = NCCL + smi only (no NVSM on HGX)")
+    ap.add_argument("--nccl-tests", default="all_reduce,all_gather,reduce_scatter",
+                    help="comma-separated NCCL tests to run as the suite")
+    ap.add_argument("--nccl-dir", default="",
+                    help="directory holding the *_perf binaries "
+                         "(default: find them on the PATH)")
+    ap.add_argument("--nccl-timeout", type=int, default=2700,
+                    help="seconds allowed for the whole NCCL suite")
+    ap.add_argument("--nccl-min-busbw", type=float, default=0.0,
+                    help="optional GB/s floor for the all-reduce peak bus "
+                         "bandwidth (0 = correctness gate only)")
     ap.add_argument("--stress-timeout", type=int, default=5400,
                     help="seconds allowed for nvsm stress-test (default 5400)")
     ap.add_argument("--health-timeout", type=int, default=1800,
@@ -501,9 +686,12 @@ def main():
     ap.add_argument("--dump-timeout", type=int, default=1800,
                     help="seconds allowed for nvsm dump health (default 1800)")
     ap.add_argument("--only", help="comma-separated step slugs to run "
-                                   "(dgx-release,nvsm-health,smi-query,topo,stress,dump)")
+                                   "(dgx-release,os-release,nvsm-health,smi-query,topo,nccl,stress,dump)")
     ap.add_argument("--force", action="store_true",
                     help="redo hosts that already have a FULLLOG")
+    ap.add_argument("--tail", action="store_true",
+                    help="stream each step's output live, prefixed by "
+                         "hostname (best for one host or a few)")
     ap.add_argument("--dry-run", action="store_true",
                     help="execute nothing; print the plan and write DRY RUN artifacts")
     ap.add_argument("--sudo-password", action="store_true",
@@ -517,17 +705,22 @@ def main():
     if sudo_password == "":
         sudo_password = None
 
-    steps = build_steps(args.stress_timeout, args.health_timeout,
-                          args.dump_timeout)
+    nccl_tests = tuple(t.strip() for t in args.nccl_tests.split(",") if t.strip())
+    steps = build_steps(args.profile, args.stress_timeout, args.health_timeout,
+                        args.dump_timeout, args.nccl_timeout, nccl_tests,
+                        args.nccl_dir, gpus=args.gpus)
     if args.only:
         wanted = {s.strip() for s in args.only.split(",")}
         steps = [s for s in steps if s.slug in wanted]
         if not steps:
             print("No steps matched --only.", file=sys.stderr)
             return 2
-    steps_by_slug = {s.slug: s for s in build_steps(args.stress_timeout,
-                                                        args.health_timeout,
-                                                        args.dump_timeout)}
+    steps_by_slug = {}
+    for _p in ("dgx", "hgx"):
+        for _s in build_steps(_p, args.stress_timeout, args.health_timeout,
+                              args.dump_timeout, args.nccl_timeout, nccl_tests,
+                              args.nccl_dir, gpus=args.gpus):
+            steps_by_slug[_s.slug] = _s
 
     os.makedirs(args.out, exist_ok=True)
     jobs = []  # (hostname, runner, description)
@@ -553,11 +746,13 @@ def main():
     if len(jobs) == 1:
         name, runner, _ = jobs[0]
         results.append(run_host(name, runner, args.out, steps, args.gpus,
-                                sudo_password, args.force))
+                                sudo_password, args.force, args.nccl_min_busbw,
+                                args.tail))
     else:
         with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as ex:
             futs = {ex.submit(run_host, name, runner, args.out, steps,
-                              args.gpus, sudo_password, args.force): name
+                              args.gpus, sudo_password, args.force,
+                              args.nccl_min_busbw, args.tail): name
                     for name, runner, _ in jobs}
             for fut in as_completed(futs):
                 r = fut.result()

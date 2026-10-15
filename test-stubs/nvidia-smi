@@ -1,0 +1,3 @@
+#!/bin/bash
+if [ "$1" = "-q" ]; then echo "Attached GPUs : 8"; else printf 'GPU0 GPU1\n  X  NV12\n'; fi
+exit 0
