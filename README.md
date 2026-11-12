@@ -206,3 +206,80 @@ a finished log are skipped; the run picks up where it left off. Add
 - Targets are Ubuntu 24.04 / DGX OS. The stress-test log harvest looks in
   `$HOME`, `/var/log`, and `/tmp` for `*.nvsmlog` files created during the
   run.
+- The stress step runs `nvsm stress-test --no-prompt`, and the verdict
+  fails any run whose output shows the confirmation prompt: without the
+  flag, nvsm prompts, reads EOF over SSH and exits 0 having run nothing.
+  (Found on the first real-hardware run, 2026-11-11 — the PASS was hollow.)
+  The verdict also fails a run that finds a stress test already in
+  progress on the host (nvsm cancels the new request and exits 0): the
+  stress itself runs service-side and survives client disconnects, so a
+  leftover from an earlier run is a real field case, not a pass.
+- NCCL is a dgx-vitals addition beyond the original field workflow: when
+  nccl-tests is not installed on a host, the step is SKIPPED — excluded
+  from % Complete and the Overall verdict — not failed. Where NCCL is
+  contractual, pass `--require-nccl`: a missing install then FAILs the
+  step instead of skipping it.
+- `--profile auto` probes each host once before running: /etc/dgx-release
+  or the nvsm CLI means dgx, neither means hgx, and the host's step list
+  is built to match (a mixed fleet validates in one batch). The detected
+  platform and the host's DMI product/vendor are recorded in the FULLLOG
+  header. An explicit `--profile dgx|hgx` still overrides per run.
+- `--watch --hosts wave.csv --out ROOT` is the wave scoreboard: it
+  contacts nothing and reads the output root — a host counts as done
+  when its health card exists (or its FULLLOG shows the OVERALL
+  trailer). It renders the count in doubled block letters, rainbow on a
+  TTY, with per-host state below, and closes with a WAVE DONE banner
+  and the verdict tally when the wave completes. `--once` prints a
+  single plain-text look for scripts.
+- `nvsm dump health` gets a 3600s default timeout: on a B300 it sat at
+  99% past the old 1800s cap. The dump archive it writes is harvested
+  into the host's output folder alongside the stress log.
+- **v1.8 — stress refusals + `--force-stress`.** Field lesson from the
+  first fleet wave: `nvsm stress-test` refuses to run while system
+  alerts are uncleared ("Stress Testing will not be done") and exits 0;
+  a word-scan read that refusal as a failure. A refusal is now scored
+  SKIP — the step did not run — and `--force-stress` passes nvsm's own
+  `--force` for re-runs where the alerts are known and adjudicated.
+
+## Building the tracker sheet — `tracker_build.py`
+
+After a batch run, turn the output root into a tracker-shaped spreadsheet —
+one row per host, the per-test columns filled in, each host's health card
+embedded in its row:
+
+    python3 tracker_build.py --vitals validation-output --hosts hosts.csv \
+        --out validation-tracker.xlsx
+
+It can also fold in harvested `cdw-validation` bundles (`--bundles DIR`) for
+hosts validated outside dgx-vitals — dgx-vitals wins where both exist, and
+the Source column always says which pipeline produced a row. A bundle's
+NVSM Health is judged from the health log's Unhealthy checks, not the exit
+code (`nvsm show health` exits 0 with unhealthy checks present). The fleet
+CSV supplies row order and the BMC/LAN IP columns; hosts with no results
+still get a NO DATA row, so the sheet doubles as a checklist. `--bundle-out
+FILE.tar.gz` packs the sheet plus every source artifact into one
+sha256-stamped bundle for ferrying to another machine. Needs
+`pip install openpyxl pillow` — dgx-vitals itself stays stdlib-only.
+
+**Adjudications (tracker_build v1.3).** Known false positives are ruled,
+not deleted and not left red. When a host's only unhealthy NVSM check
+is `Verify DIMM part number` (KI-1 — NVSM's expected-parts list lags
+the fleet's fitted Micron part), NVSM Health is marked **Warned**, and
+a host with no other failures reads **HEALTHY WITH WARNINGS**. When
+NCCL failed only because nccl-tests is partially provisioned (KI-2),
+it is marked Skipped — not tested — instead of Failed. One-off rulings
+go in a CSV (`--adjudications`, columns `hostname,step,state,note`).
+Every ruling is written up in a Known Issues & Adjudications block at
+the bottom of the sheet. Multiple `--vitals` roots merge **per step**,
+so a partial re-run (`--only dump`) overrides only the steps it ran.
+
+## Screenshots
+
+The wave scoreboard (`--watch`), mid-wave — demo data:
+
+![Wave scoreboard](docs/watch-scoreboard.png)
+
+The consolidated tracker built by tracker_build.py — demo data, with the
+per-host health cards embedded:
+
+![Validation tracker sheet](docs/tracker-sheet.png)

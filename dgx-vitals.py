@@ -8,6 +8,8 @@ standard evidence set:
     <out>/<hostname>/<hostname>-HEALTHY.png     health card ("vitals chart")
     <out>/<hostname>/*.nvsmlog                  stress-test log, harvested
                                                 from the host when found
+    <out>/<hostname>/nvsm-health-*.tar.*        dump archive, harvested
+                                                from the host when found
     <out>/summary.csv                           one row per host, tracker-shaped
 
 Modes:
@@ -15,10 +17,17 @@ Modes:
     --host NAME [--address A]   run against a single host over SSH
     --hosts hosts.csv       fan out over SSH to many hosts (CSV columns:
                             hostname,address[,user])
-    --profile dgx|hgx       dgx (default): NVSM + NCCL + nvidia-smi.
+    --profile dgx|hgx|auto  dgx (default): NVSM + NCCL + nvidia-smi.
                             hgx: NCCL + nvidia-smi only — NVSM and
                             /etc/dgx-release are DGX-only, so on HGX the
                             NCCL all-reduce carries the fabric proof.
+                            auto: probe each host once (/etc/dgx-release
+                            or the nvsm CLI means dgx; neither means hgx)
+                            and build its step list to match.
+    --watch --hosts CSV     with --out: contact nothing; render the wave
+                            scoreboard from the output root (health cards
+                            and FULLLOG trailers) until every host in
+                            the CSV is done. --once prints a single look.
     --dry-run               with any mode: execute nothing. Prints the plan
                             (exact commands, in order, per host) and writes
                             the same artifacts stamped DRY RUN, so anyone
@@ -51,7 +60,7 @@ import zlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
-VERSION = "1.4"
+VERSION = "1.8"
 
 _PRINT_LOCK = threading.Lock()
 
@@ -171,10 +180,11 @@ class Step:
         return ("sudo " if self.sudo else "") + shlex.join(self.argv)
 
 
-def build_steps(profile, stress_timeout, health_timeout=1800, dump_timeout=1800,
+def build_steps(profile, stress_timeout, health_timeout=1800, dump_timeout=3600,
                 nccl_timeout=2700, nccl_tests=("all_reduce", "all_gather",
                                                "reduce_scatter"),
-                nccl_dir="", nccl_mpirun="mpirun", gpus=8):
+                nccl_dir="", nccl_mpirun="mpirun", gpus=8,
+                force_stress=False):
     # Defaults sized from field timings: nvsm show health 15-20 min,
     # stress-test 30-60 min, nvsm dump health ~10+ min — all get headroom.
     # Profiles: dgx = NVSM + NCCL + smi (DGX Quickstart; DGX nodes anywhere);
@@ -197,7 +207,9 @@ def build_steps(profile, stress_timeout, health_timeout=1800, dump_timeout=1800,
     ]
     if profile == "dgx":
         steps += [
-            Step("stress", "NVSM Stress Test", ["nvsm", "stress-test"],
+            Step("stress", "NVSM Stress Test",
+                 ["nvsm", "stress-test", "--no-prompt"]
+                 + (["--force"] if force_stress else []),
                  sudo=True, timeout=stress_timeout),
             Step("dump", "NVSM Dump Health", ["nvsm", "dump", "health"],
                  sudo=True, timeout=dump_timeout),
@@ -219,7 +231,8 @@ def _nccl_script(tests, mpirun, bin_dir, gpus):
     return "; ".join(parts)
 
 
-def verdict(step, rc, out, expected_gpus, nccl_min_busbw=0.0):
+def verdict(step, rc, out, expected_gpus, nccl_min_busbw=0.0,
+            nccl_required=False):
     """Return (ok, note). Conservative rules; the FULLLOG always carries the
     raw output so a human can override any heuristic."""
     text = out or ""
@@ -246,7 +259,7 @@ def verdict(step, rc, out, expected_gpus, nccl_min_busbw=0.0):
         sections = re.split(r"===== (\w+_perf) =====", text)
         if len(sections) < 3:
             return False, "no NCCL test sections found in output"
-        fails, peaks = [], {}
+        fails, peaks, missing = [], {}, []
         for i in range(1, len(sections), 2):
             name, body = sections[i], sections[i + 1]
             short = name.replace("_perf", "")
@@ -255,6 +268,9 @@ def verdict(step, rc, out, expected_gpus, nccl_min_busbw=0.0):
                 fails.append(f"{short}: no result (missing or crashed)")
                 continue
             if int(ex.group(1)) != 0:
+                if "unable to find the specified executable" in body:
+                    missing.append(short)
+                    continue
                 fails.append(f"{short}: exit {ex.group(1)}"
                              + (" — not provisioned" if ex.group(1) == "127"
                                 else ""))
@@ -281,6 +297,16 @@ def verdict(step, rc, out, expected_gpus, nccl_min_busbw=0.0):
                 fails.append(f"{short}: nonzero #wrong — correctness FAILED")
                 continue
             peaks[short] = peak
+        n_tests = (len(sections) - 1) // 2
+        if missing and not fails and len(missing) == n_tests:
+            if nccl_required:
+                return False, ("nccl-tests not installed on this host — "
+                               "required by --require-nccl")
+            return None, ("nccl-tests not installed on this host — "
+                          "step skipped")
+        if missing:
+            fails.append("not installed: " + ", ".join(missing)
+                         + " (nccl-tests partially provisioned)")
         if fails:
             return False, "; ".join(fails)
         if (nccl_min_busbw and peaks.get("all_reduce") is not None
@@ -307,6 +333,19 @@ def verdict(step, rc, out, expected_gpus, nccl_min_busbw=0.0):
             return False, "no NVLink links in topology matrix"
         return True, ""
     if step.slug == "stress":
+        if "are you sure you want to proceed" in low:
+            return False, ("nvsm printed its confirmation prompt and "
+                           "exited — the stress test never ran "
+                           "(--no-prompt missing)")
+        if "stress test is already running" in low:
+            return False, ("another stress test was already running on "
+                           "this host; nvsm cancelled this request — "
+                           "the step did not run")
+        if "stress testing will not be done" in low or \
+                "have not been cleared" in low:
+            return None, ("nvsm refused to run: uncleared system alerts "
+                          "on this host — the step did not run "
+                          "(re-run with --force-stress to override)")
         bad = [w for w in ("fail", "error") if w in low]
         if bad and "0 fail" not in low and "no error" not in low:
             return False, "stress output mentions fail/error — check FULLLOG"
@@ -492,6 +531,30 @@ def harvest_nvsmlog(runner, run_start_epoch, host_dir):
     return got
 
 
+def harvest_dump_archive(runner, run_start_epoch, host_dir):
+    """Best-effort: fetch the nvsm-health-*.tar.* archive the dump step
+    wrote on the host (usually /tmp), so the per-host evidence set is
+    complete even when a later step fails."""
+    got = []
+    find_cmd = ["sh", "-c",
+                "find /tmp /var/tmp -maxdepth 1 -name 'nvsm-health-*' "
+                "-type f -newermt '@%d' -print 2>/dev/null"
+                % int(run_start_epoch)]
+    rc, out, _ = runner.run(find_cmd, 120)
+    if rc != 0:
+        return got
+    paths = [ln.strip() for ln in out.splitlines()
+             if ln.strip().endswith((".tar.xz", ".tar.gz", ".tgz"))]
+    for path in paths[:2]:
+        dest = os.path.join(host_dir, os.path.basename(path))
+        try:
+            runner.fetch(path, dest)
+            got.append(os.path.basename(path))
+        except Exception:
+            pass
+    return got
+
+
 def print_plan(hostname, runner_desc, steps, host_dir):
     print(f"\n[dry-run] {hostname}  ({runner_desc})")
     for i, step in enumerate(steps, 1):
@@ -499,8 +562,164 @@ def print_plan(hostname, runner_desc, steps, host_dir):
     print(f"  evidence -> {host_dir}")
 
 
+PROBE_CMD = ("if [ -f /etc/dgx-release ]; then echo PLATFORM=dgx; "
+             "elif command -v nvsm >/dev/null 2>&1; then echo PLATFORM=dgx; "
+             "else echo PLATFORM=hgx; fi; "
+             "echo PRODUCT=$(cat /sys/class/dmi/id/product_name 2>/dev/null); "
+             "echo VENDOR=$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)")
+
+
+def detect_platform(runner):
+    """One cheap probe per host: DGX OS leaves /etc/dgx-release and the
+    nvsm CLI; OEM HGX hosts have neither. Returns (profile, evidence) —
+    evidence is the host's DMI product/vendor, for the record."""
+    try:
+        _rc, out, _dur = runner.run(["sh", "-c", PROBE_CMD], 60)
+    except Exception as e:
+        return "hgx", f"probe failed ({e}); assumed hgx"
+    profile, bits = "hgx", []
+    for ln in out.splitlines():
+        if ln.startswith("PLATFORM="):
+            profile = ln.split("=", 1)[1].strip() or profile
+        elif ln.startswith(("PRODUCT=", "VENDOR=")):
+            val = ln.split("=", 1)[1].strip()
+            if val:
+                bits.append(val)
+    return profile, " ".join(bits)
+
+
+# --- Wave watching -------------------------------------------------------
+# A tiny block font in the classic banner style ('*' pixels), just the
+# glyphs the scoreboard needs: digits, '/', and the WAVE DONE letters.
+_FONT = {
+    "0": (" *** ", "*   *", "*  **", "* * *", "**  *", "*   *", " *** "),
+    "1": ("  *  ", " **  ", "* *  ", "  *  ", "  *  ", "  *  ", "*****"),
+    "2": (" *** ", "*   *", "    *", "   * ", "  *  ", " *   ", "*****"),
+    "3": (" *** ", "*   *", "    *", "  ** ", "    *", "*   *", " *** "),
+    "4": ("   * ", "  ** ", " * * ", "*  * ", "*****", "   * ", "   * "),
+    "5": ("*****", "*    ", "**** ", "    *", "    *", "*   *", " *** "),
+    "6": (" *** ", "*   *", "*    ", "**** ", "*   *", "*   *", " *** "),
+    "7": ("*****", "    *", "   * ", "  *  ", " *   ", " *   ", " *   "),
+    "8": (" *** ", "*   *", "*   *", " *** ", "*   *", "*   *", " *** "),
+    "9": (" *** ", "*   *", "*   *", " ****", "    *", "*   *", " *** "),
+    "/": ("    *", "   * ", "   * ", "  *  ", " *   ", " *   ", "*    "),
+    " ": ("   ", "   ", "   ", "   ", "   ", "   ", "   "),
+    "W": ("*   *", "*   *", "*   *", "* * *", "* * *", "** **", "*   *"),
+    "A": (" *** ", "*   *", "*   *", "*****", "*   *", "*   *", "*   *"),
+    "V": ("*   *", "*   *", "*   *", "*   *", "*   *", " * * ", "  *  "),
+    "E": ("*****", "*    ", "*    ", "**** ", "*    ", "*    ", "*****"),
+    "D": ("**** ", "*   *", "*   *", "*   *", "*   *", "*   *", "**** "),
+    "O": (" *** ", "*   *", "*   *", "*   *", "*   *", "*   *", " *** "),
+    "N": ("*   *", "**  *", "* * *", "*  **", "*   *", "*   *", "*   *"),
+}
+
+
+def render_banner(text, scale=1):
+    """Render text in block letters ('*' pixels). Scale > 1 doubles the
+    pixels each way — the sed/awk doubler trick, built in."""
+    rows = [""] * 7
+    for ch in text.upper():
+        glyph = _FONT.get(ch, _FONT[" "])
+        for i in range(7):
+            rows[i] += glyph[i] + " "
+    if scale > 1:
+        big = []
+        for row in rows:
+            doubled = "".join(c * scale for c in row)
+            big.extend([doubled] * scale)
+        rows = big
+    return "\n".join(r.rstrip() for r in rows)
+
+
+def _rainbow(block):
+    """lolcat-style: paint each row of a text block a hue-stepped color."""
+    import colorsys
+    out = []
+    for i, ln in enumerate(block.splitlines()):
+        r, g, b = colorsys.hsv_to_rgb((i * 14 % 360) / 360.0, 0.85, 1.0)
+        out.append(f"\033[38;2;{int(r * 255)};{int(g * 255)};"
+                   f"{int(b * 255)}m{ln}\033[0m")
+    return "\n".join(out)
+
+
+def wave_state(out_root, hostname):
+    """(state, verdict) for one host in a wave output root. The health
+    card is the last artifact a run writes, so it marks completion; a
+    FULLLOG carrying an OVERALL trailer is the fallback signal."""
+    host_dir = os.path.join(out_root, hostname)
+    fulllog = os.path.join(host_dir, f"{hostname}-FULLLOG.txt")
+    verdict = ""
+    if os.path.exists(fulllog):
+        try:
+            with open(fulllog, errors="replace") as f:
+                for ln in f:
+                    if ln.startswith("OVERALL:"):
+                        verdict = ln.split(":", 1)[1].strip()
+        except OSError:
+            pass
+    if verdict or os.path.exists(
+            os.path.join(host_dir, f"{hostname}-HEALTHY.png")):
+        return "done", verdict
+    if os.path.exists(fulllog):
+        return "running", verdict
+    return "waiting", verdict
+
+
+def cmd_watch(args):
+    """The wave scoreboard: watch an output root, contact nothing."""
+    if args.hosts:
+        names = [n for n, _a, _u in read_hosts(args.hosts)]
+    elif os.path.isdir(args.out):
+        names = sorted(d for d in os.listdir(args.out)
+                       if os.path.isdir(os.path.join(args.out, d)))
+    else:
+        names = []
+    if not names:
+        print("watch: no hosts — pass --hosts CSV for the wave list, or "
+              "an --out root that has host folders.", file=sys.stderr)
+        return 2
+    total = len(names)
+    while True:
+        states = {n: wave_state(args.out, n) for n in names}
+        done = sum(1 for s, _v in states.values() if s == "done")
+        running = sum(1 for s, _v in states.values() if s == "running")
+        waiting = total - done - running
+        if args.once:
+            print(f"{done} of {total} validated "
+                  f"({running} running, {waiting} waiting)")
+            for n in names:
+                s, v = states[n]
+                print(f"  {n}: {s}" + (f" — {v}" if v else ""))
+            return 0
+        tty = sys.stdout.isatty()
+        if tty:
+            sys.stdout.write("\033[2J\033[H")
+        block = render_banner(f"{done} / {total}", scale=2)
+        print(_rainbow(block) if tty else block)
+        print(f"\n{done} of {total} validated "
+              f"({running} running, {waiting} waiting)\n")
+        for n in names:
+            s, v = states[n]
+            print(f"  {n:<40} {s}" + (f" — {v}" if v else ""))
+        if done >= total:
+            healthy = sum(1 for _s, v in states.values()
+                          if v.startswith("HEALTHY"))
+            not_healthy = sum(1 for _s, v in states.values()
+                              if v.startswith("NOT HEALTHY"))
+            tally = f"{healthy} HEALTHY, {not_healthy} NOT HEALTHY"
+            if healthy + not_healthy < total:
+                tally += f", {total - healthy - not_healthy} verdict unread"
+            done_block = render_banner("WAVE DONE", scale=1)
+            print("\n" + (_rainbow(done_block) if tty else done_block))
+            print(tally)
+            return 0
+        sys.stdout.flush()
+        time.sleep(max(1.0, args.interval))
+
+
 def run_host(hostname, runner, out_root, steps, expected_gpus,
-             sudo_password=None, force=False, nccl_min_busbw=0.0, tail=False):
+             sudo_password=None, force=False, nccl_min_busbw=0.0, tail=False,
+             nccl_required=False, platform_note=""):
     host_dir = os.path.join(out_root, hostname)
     os.makedirs(host_dir, exist_ok=True)
     fulllog_path = os.path.join(host_dir, f"{hostname}-FULLLOG.txt")
@@ -516,6 +735,8 @@ def run_host(hostname, runner, out_root, steps, expected_gpus,
     transcript = []
     transcript.append("DGX Vitals — FULLLOG" + ("  [DRY RUN]" if dry else ""))
     transcript.append(f"Host: {hostname}   Mode: {runner.name}   Tool: dgx-vitals.py v{VERSION}")
+    if platform_note:
+        transcript.append(f"Platform: {platform_note}")
     transcript.append(f"Started: {now_iso()}")
     if dry:
         transcript.append("DRY RUN: no commands were executed and no host was contacted.")
@@ -535,12 +756,16 @@ def run_host(hostname, runner, out_root, steps, expected_gpus,
         if dry:
             ok, note = None, "dry-run"
         else:
-            ok, note = verdict(step, rc, out, expected_gpus, nccl_min_busbw)
+            ok, note = verdict(step, rc, out, expected_gpus, nccl_min_busbw,
+                               nccl_required)
         n_pass += 1 if ok else 0
         result["steps"][step.slug] = (ok, note)
+        if ok is None and not dry and note:
+            result["notes"].append(f"{step.label}: {note}")
         if step.slug == "dgx-release" and ok:
             result["release"] = note
-        state = "DRY" if ok is None else ("PASS" if ok else "FAIL")
+        state = ("DRY" if dry else "SKIP" if ok is None
+                 else "PASS" if ok else "FAIL")
         _say(f"  [{hostname}] step {i}/{len(steps)}: {step.label} — "
              f"{state} ({dur:.0f}s)")
         transcript.append(f"\n[{i}/{len(steps)}] {step.shown()}")
@@ -555,14 +780,23 @@ def run_host(hostname, runner, out_root, steps, expected_gpus,
         if logs:
             result["notes"].append("stress log: " + ", ".join(logs))
             transcript.append(f"\n[harvested stress log(s): {', '.join(logs)}]")
+        if any(s.slug == "dump" for s in steps):
+            dumps = harvest_dump_archive(runner, run_start, host_dir)
+            if dumps:
+                result["notes"].append("dump archive: " + ", ".join(dumps))
+                transcript.append(
+                    f"\n[harvested dump archive(s): {', '.join(dumps)}]")
 
-    total = len(steps)
     if dry:
+        total = len(steps)
         result["overall"] = "DRY RUN"
         result["pct"] = ""
     else:
+        total = sum(1 for ok, _n in result["steps"].values()
+                    if ok is not None)
         result["pct"] = round(100 * n_pass / total) if total else 0
-        result["overall"] = "HEALTHY" if n_pass == total else "NOT HEALTHY"
+        result["overall"] = ("HEALTHY" if total and n_pass == total
+                              else "NOT HEALTHY")
     transcript.append("\n" + "=" * 72)
     transcript.append(f"OVERALL: {result['overall']}"
                       + ("" if dry else f" ({n_pass}/{total} steps passed)"))
@@ -644,8 +878,11 @@ def write_summary(path, results, steps_by_slug):
                 for slug in slugs:
                     if slug in r["steps"]:
                         ok = r["steps"][slug][0]
-                        cell = ("Dry Run" if ok is None else
-                                ("Complete" if ok else "Failed"))
+                        if ok is None:
+                            cell = ("Dry Run" if r["overall"] == "DRY RUN"
+                                    else "Skipped")
+                        else:
+                            cell = "Complete" if ok else "Failed"
                 row.append(cell)
             row.append(r.get("pct", ""))
             row.append(r["overall"])
@@ -657,18 +894,24 @@ def write_summary(path, results, steps_by_slug):
 
 def main():
     ap = argparse.ArgumentParser(description="DGX Vitals — DGX validation runner.")
-    mode = ap.add_mutually_exclusive_group(required=True)
+    mode = ap.add_mutually_exclusive_group(required=False)
     mode.add_argument("--local", action="store_true", help="validate this machine")
     mode.add_argument("--host", metavar="NAME", help="validate one host over SSH")
     mode.add_argument("--hosts", metavar="CSV", help="validate many hosts over SSH")
+    ap.add_argument("--watch", action="store_true",
+                    help="watch a wave output root (--out, with --hosts CSV "
+                         "for the wave list) and show live progress; "
+                         "contacts no hosts")
     ap.add_argument("--address", help="address for --host (default: the name itself)")
     ap.add_argument("--user", help="SSH user (overrides CSV user column)")
     ap.add_argument("--out", default="validation-output", help="output root dir")
     ap.add_argument("--jobs", type=int, default=4, help="parallel SSH workers")
     ap.add_argument("--gpus", type=int, default=8, help="expected GPU count")
-    ap.add_argument("--profile", choices=["dgx", "hgx"], default="dgx",
+    ap.add_argument("--profile", choices=["dgx", "hgx", "auto"],
+                    default="dgx",
                     help="dgx = NVSM + NCCL + smi (default); "
-                         "hgx = NCCL + smi only (no NVSM on HGX)")
+                         "hgx = NCCL + smi only (no NVSM on HGX); "
+                         "auto = probe each host and pick per host")
     ap.add_argument("--nccl-tests", default="all_reduce,all_gather,reduce_scatter",
                     help="comma-separated NCCL tests to run as the suite")
     ap.add_argument("--nccl-dir", default="",
@@ -681,10 +924,15 @@ def main():
                          "bandwidth (0 = correctness gate only)")
     ap.add_argument("--stress-timeout", type=int, default=5400,
                     help="seconds allowed for nvsm stress-test (default 5400)")
+    ap.add_argument("--force-stress", action="store_true",
+                    help="pass --force to nvsm stress-test, overriding its "
+                         "refusal to run while system alerts are uncleared; "
+                         "use when the alerts are known/adjudicated (e.g. "
+                         "the DIMM part-number false positive)")
     ap.add_argument("--health-timeout", type=int, default=1800,
                     help="seconds allowed for nvsm show health (default 1800)")
-    ap.add_argument("--dump-timeout", type=int, default=1800,
-                    help="seconds allowed for nvsm dump health (default 1800)")
+    ap.add_argument("--dump-timeout", type=int, default=3600,
+                    help="seconds allowed for nvsm dump health (default 3600)")
     ap.add_argument("--only", help="comma-separated step slugs to run "
                                    "(dgx-release,os-release,nvsm-health,smi-query,topo,nccl,stress,dump)")
     ap.add_argument("--force", action="store_true",
@@ -694,11 +942,28 @@ def main():
                          "hostname (best for one host or a few)")
     ap.add_argument("--dry-run", action="store_true",
                     help="execute nothing; print the plan and write DRY RUN artifacts")
+    ap.add_argument("--interval", type=float, default=30,
+                    help="seconds between --watch refreshes (default 30)")
+    ap.add_argument("--once", action="store_true",
+                    help="with --watch: print the wave state once and exit")
     ap.add_argument("--sudo-password", action="store_true",
                     help="prompt once for a sudo password (held in memory only)")
     ap.add_argument("--no-batch", action="store_true",
                     help="allow interactive SSH prompts (single-host runs)")
+    ap.add_argument("--require-nccl", action="store_true",
+                    help="fail the NCCL step when nccl-tests is not "
+                         "installed, instead of skipping it (use where "
+                         "NCCL validation is contractual)")
     args = ap.parse_args()
+
+    if args.watch:
+        try:
+            return cmd_watch(args)
+        except KeyboardInterrupt:
+            print("\nwatch stopped")
+            return 130
+    if not (args.local or args.host or args.hosts):
+        ap.error("one of --local, --host, --hosts or --watch is required")
 
     sudo_password = getpass.getpass("Sudo password (blank = passwordless): ") \
         if args.sudo_password else None
@@ -706,20 +971,27 @@ def main():
         sudo_password = None
 
     nccl_tests = tuple(t.strip() for t in args.nccl_tests.split(",") if t.strip())
-    steps = build_steps(args.profile, args.stress_timeout, args.health_timeout,
-                        args.dump_timeout, args.nccl_timeout, nccl_tests,
-                        args.nccl_dir, gpus=args.gpus)
-    if args.only:
-        wanted = {s.strip() for s in args.only.split(",")}
-        steps = [s for s in steps if s.slug in wanted]
-        if not steps:
-            print("No steps matched --only.", file=sys.stderr)
-            return 2
+
+    def mksteps(profile):
+        st = build_steps(profile, args.stress_timeout, args.health_timeout,
+                         args.dump_timeout, args.nccl_timeout, nccl_tests,
+                         args.nccl_dir, gpus=args.gpus,
+                         force_stress=args.force_stress)
+        if args.only:
+            wanted = {s.strip() for s in args.only.split(",")}
+            st = [s for s in st if s.slug in wanted]
+        return st
+
+    steps = mksteps(args.profile) if args.profile != "auto" else None
+    if steps is not None and not steps:
+        print("No steps matched --only.", file=sys.stderr)
+        return 2
     steps_by_slug = {}
     for _p in ("dgx", "hgx"):
         for _s in build_steps(_p, args.stress_timeout, args.health_timeout,
                               args.dump_timeout, args.nccl_timeout, nccl_tests,
-                              args.nccl_dir, gpus=args.gpus):
+                              args.nccl_dir, gpus=args.gpus,
+                              force_stress=args.force_stress):
             steps_by_slug[_s.slug] = _s
 
     os.makedirs(args.out, exist_ok=True)
@@ -736,23 +1008,47 @@ def main():
             r = SSHRunner(addr, user=args.user or user, batch=not args.no_batch)
             jobs.append((name, r, f"ssh -> {r.target}"))
 
+    # Resolve each host's step list. A fixed profile shares one list;
+    # --profile auto probes each host once and builds its list to match.
+    resolved = {}
+    for name, runner, _desc in jobs:
+        if args.profile != "auto":
+            resolved[name] = (steps, f"{args.profile} (as requested)")
+        elif args.dry_run:
+            resolved[name] = (mksteps("dgx"),
+                              "auto (dry run — dgx plan shown)")
+        else:
+            prof, evidence = detect_platform(runner)
+            label = f"{prof} (detected: {evidence})" if evidence \
+                else f"{prof} (detected)"
+            resolved[name] = (mksteps(prof), label)
+            print(f"  [{name}] platform: {label}")
+        if not resolved[name][0]:
+            print("No steps matched --only.", file=sys.stderr)
+            return 2
+
     if args.dry_run:
         jobs = [(n, DryRunner(r), d) for n, r, d in jobs]
         for name, _, desc in jobs:
-            print_plan(name, desc, steps, os.path.join(args.out, name))
+            print_plan(name, desc, resolved[name][0],
+                       os.path.join(args.out, name))
 
     print(f"\nValidating {len(jobs)} host(s); output -> {args.out}")
     results = []
     if len(jobs) == 1:
         name, runner, _ = jobs[0]
-        results.append(run_host(name, runner, args.out, steps, args.gpus,
-                                sudo_password, args.force, args.nccl_min_busbw,
-                                args.tail))
+        results.append(run_host(name, runner, args.out, resolved[name][0],
+                                args.gpus, sudo_password, args.force,
+                                args.nccl_min_busbw, args.tail,
+                                args.require_nccl,
+                                platform_note=resolved[name][1]))
     else:
         with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as ex:
-            futs = {ex.submit(run_host, name, runner, args.out, steps,
-                              args.gpus, sudo_password, args.force,
-                              args.nccl_min_busbw, args.tail): name
+            futs = {ex.submit(run_host, name, runner, args.out,
+                              resolved[name][0], args.gpus, sudo_password,
+                              args.force, args.nccl_min_busbw, args.tail,
+                              args.require_nccl,
+                              platform_note=resolved[name][1]): name
                     for name, runner, _ in jobs}
             for fut in as_completed(futs):
                 r = fut.result()
