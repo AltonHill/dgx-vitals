@@ -1,0 +1,3 @@
+Hostname,Release,NVSM Health,NVIDIA-SMI Query,NVLink Topology,NCCL Tests,NVSM Stress Test,NVSM Dump Health,% Complete,Overall,Notes
+fx-x01-prod-hv-02,Complete,Failed,Complete,Complete,,Failed,Complete,67,NOT HEALTHY,NVSM Show Health: output mentions: unhealthy; NVSM Stress Test: stress output mentions fail/error — check FULLLOG
+fx-x01-prod-hv-04,Complete,Failed,Complete,Complete,,Complete,Complete,83,NOT HEALTHY,NVSM Show Health: output mentions: unhealthy

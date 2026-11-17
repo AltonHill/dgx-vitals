@@ -1,0 +1,97 @@
+# Command: nvsm show versions
+# Started: 2026-11-11 17:43:07
+
+/versions
+Properties:
+    dgx-release = 7.5.0
+    nvidia-driver = 580.178.04
+    cuda-driver = 13.0
+    os-release = Ubuntu 24.04.4 LTS (Noble Numbat)
+    kernel = 6.8.0-138-generic
+    platform = DGXB300
+    nvsm = 25.09.07
+    mlnx-ofed = OFED-internal-25.10-3.1.8:
+    datacenter-gpu-manager = 1:4.6.1-1
+    datacenter-gpu-manager-fabricmanager = 580.178.04-1ubuntu1
+    sBIOS = 01.00.08
+    vBIOS-GPU-0 = 97.10.64.00.0c
+    vBIOS-GPU-1 = 97.10.64.00.0c
+    vBIOS-GPU-2 = 97.10.64.00.0c
+    vBIOS-GPU-3 = 97.10.64.00.0c
+    vBIOS-GPU-4 = 97.10.64.00.0c
+    vBIOS-GPU-5 = 97.10.64.00.0c
+    vBIOS-GPU-6 = 97.10.64.00.0c
+    vBIOS-GPU-7 = 97.10.64.00.0c
+    CPLDMB_0 = Version Unavailable
+    CPLDMID_0 = 0.7.3.0
+    EROT_BIOS_0 = Version Unavailable
+    EROT_BMC_0 = Version Unavailable
+    HGX_FW_BMC_0 = Version Unavailable
+    HGX_FW_ERoT_BMC_0 = Version Unavailable
+    HGX_FW_ERoT_FPGA_0 = Version Unavailable
+    HGX_FW_ERoT_NVLinkManagementNIC_0 = Version Unavailable
+    HGX_FW_ERoT_NVSwitch_0 = Version Unavailable
+    HGX_FW_ERoT_NVSwitch_1 = Version Unavailable
+    HGX_FW_FPGA_0 = Version Unavailable
+    HGX_FW_GPU_SXM_1 = 97.10.64.00.0c
+    HGX_FW_GPU_SXM_2 = 97.10.64.00.0c
+    HGX_FW_GPU_SXM_3 = 97.10.64.00.0c
+    HGX_FW_GPU_SXM_4 = 97.10.64.00.0c
+    HGX_FW_GPU_SXM_5 = 97.10.64.00.0c
+    HGX_FW_GPU_SXM_6 = 97.10.64.00.0c
+    HGX_FW_GPU_SXM_7 = 97.10.64.00.0c
+    HGX_FW_GPU_SXM_8 = 97.10.64.00.0c
+    HGX_FW_NVSwitch_0 = --
+    HGX_FW_NVSwitch_1 = --
+    HGX_InfoROM_GPU_0 = Version Unavailable
+    HGX_InfoROM_GPU_1 = Version Unavailable
+    HGX_InfoROM_GPU_2 = Version Unavailable
+    HGX_InfoROM_GPU_3 = Version Unavailable
+    HGX_InfoROM_GPU_4 = Version Unavailable
+    HGX_InfoROM_GPU_5 = Version Unavailable
+    HGX_InfoROM_GPU_6 = Version Unavailable
+    HGX_InfoROM_GPU_7 = Version Unavailable
+    HostBIOS_0 = 01.00.08
+    HostBIOS_0[Slot_0] = Version Unavailable
+    HostBIOS_0[Slot_1] = Version Unavailable
+    HostBMC_0 = 1.01.44
+    HostBMC_0[Slot_0] = Version Unavailable
+    HostBMC_0[Slot_1] = Version Unavailable
+    PCIeSwitch_0 = Version Unavailable
+    PCIeSwitch_1 = Version Unavailable
+    PSU_0 = Version Unavailable
+    PSU_1 = 07.48.46.54.46.48.46.54
+    PSU_10 = 07.48.46.49.46.48.46.56
+    PSU_11 = Version Unavailable
+    PSU_2 = 07.48.46.54.46.48.46.54
+    PSU_3 = 07.48.46.54.46.48.46.54
+    PSU_4 = 07.48.46.54.46.48.46.54
+    PSU_5 = 07.48.46.54.46.48.46.54
+    PSU_6 = 07.48.46.54.46.48.46.54
+    PSU_7 = Version Unavailable
+    PSU_8 = 08.48.49.46.48.49.46.52.52
+    PSU_9 = 07.48.46.49.46.51.46.49
+    TPM_Firmware = Version Unavailable
+    SSD-nvme0 (S/N 1626ASF4Q4461I120N26) System-1 = 51094A30
+    SSD-nvme1 (S/N 1626ASF4Q4461I120N1V) System-1 = 51094A30
+    SSD-nvme2 (S/N S7UTNL0L822292) System-1 = LDDL5U2Q
+    SSD-nvme3 (S/N S7UTNL0L822290) System-1 = LDDL5U2Q
+    SSD-nvme4 (S/N S7UTNL0L822288) System-1 = LDDL5U2Q
+    SSD-nvme5 (S/N S7UTNL0L822289) System-1 = LDDL5U2Q
+    SSD-nvme6 (S/N S7UTNL0L824380) System-1 = LDDL5U2Q
+    SSD-nvme7 (S/N S7UTNL0L824375) System-1 = LDDL5U2Q
+    SSD-nvme8 (S/N S7UTNL0L824377) System-1 = LDDL5U2Q
+    SSD-nvme9 (S/N S7UTNL0L824379) System-1 = LDDL5U2Q
+    BlueField3(MT_0000001188)-0 = 32.47.1088
+    BlueField3(MT_0000001188)-1 = 32.47.1088
+    ConnectX8(NVD0000000072)-2 = 40.47.2526
+    ConnectX8(NVD0000000072)-3 = 40.47.2526
+    ConnectX8(NVD0000000072)-4 = 40.47.2526
+    ConnectX8(NVD0000000072)-5 = 40.47.2526
+    ConnectX8(NVD0000000072)-6 = 40.47.2526
+    ConnectX8(NVD0000000072)-7 = 40.47.2526
+    ConnectX8(NVD0000000072)-8 = 40.47.2526
+    ConnectX8(NVD0000000072)-9 = 40.47.2526
+
+
+# Finished: 2026-11-11 17:43:08  exit_code=0  duration=1s

@@ -2,13 +2,13 @@
 <rect width="1240" height="1048" fill="#0d1117"/>
 <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker></defs>
 <text x="620" y="50" font-size="30" fill="#e6edf3" text-anchor="middle" font-weight="bold">DGX Vitals — how a run works</text>
-<text x="620" y="80" font-size="15" fill="#9da7b3" text-anchor="middle" font-weight="normal">Family nickname: mimirs-test · Checks by profile — DGX or HGX · One evidence folder per host.</text>
+<text x="620" y="80" font-size="15" fill="#9da7b3" text-anchor="middle" font-weight="normal">Checks by profile — DGX or HGX · One evidence folder per host · Fail closed: missing evidence is never HEALTHY.</text>
 <rect x="470" y="102" width="300" height="46" rx="23" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
 <text x="620" y="131" font-size="17" fill="#e6edf3" text-anchor="middle" font-weight="bold">You run dgx-vitals.py</text>
 <line x1="620" y1="148" x2="620" y2="168" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="240" y="172" width="760" height="58" rx="10" fill="#161b22" stroke="#d2a83c" stroke-width="1.6"/>
-<text x="620" y="197" font-size="16" fill="#d2a83c" text-anchor="middle" font-weight="bold">STEP 0 — recommended first: add  --dry-run</text>
-<text x="620" y="219" font-size="14" fill="#9da7b3" text-anchor="middle" font-weight="normal">Prints the exact plan for every host. Touches nothing.</text>
+<text x="620" y="197" font-size="16" fill="#d2a83c" text-anchor="middle" font-weight="bold">FIRST — preflight with  --check  (read-only: runs no test, writes nothing)</text>
+<text x="620" y="219" font-size="13.5" fill="#9da7b3" text-anchor="middle" font-weight="normal">Per host: SSH, identity, sudo, nvsm, nccl-tests binaries, alerts, disk, clock. Fix what is NOT READY.</text>
 <line x1="620" y1="230" x2="620" y2="250" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="240" y="254" width="760" height="96" rx="10" fill="#161b22" stroke="#8b949e" stroke-width="1.6"/>
 <text x="620" y="280" font-size="16" fill="#e6edf3" text-anchor="middle" font-weight="bold">Pick how you run it</text>
@@ -24,7 +24,7 @@
 <line x1="620" y1="350" x2="620" y2="370" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="240" y="374" width="760" height="314" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
 <text x="620" y="402" font-size="16" fill="#e6edf3" text-anchor="middle" font-weight="bold">For each host — in parallel, and safe to re-run</text>
-<text x="620" y="424" font-size="13" fill="#9da7b3" text-anchor="middle" font-weight="normal">DGX profile runs all seven; HGX runs the shared core. FULLLOG is written as it goes.</text>
+<text x="620" y="424" font-size="12.5" fill="#9da7b3" text-anchor="middle" font-weight="normal">Step zero checks identity first. DGX runs six checks (seven with --require-nccl); HGX four. FULLLOG is written as it goes.</text>
 <rect x="264" y="438" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
 <text x="284" y="457" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold">1</text>
 <text x="308" y="457" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">Release check — DGX software version (OS version on HGX)</text>
@@ -33,14 +33,14 @@
 <text x="308" y="489" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">sudo nvsm show health — overall system health (DGX only)</text>
 <rect x="264" y="502" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
 <text x="284" y="521" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold">3</text>
-<text x="308" y="521" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">nvidia-smi -q — full GPU report (checks all 8 GPUs)</text>
+<text x="308" y="521" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">nvidia-smi -q — full GPU report (expected GPU count)</text>
 <rect x="264" y="534" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
 <text x="284" y="553" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold">4</text>
-<text x="308" y="553" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">nvidia-smi topo -m — NVLink fabric map</text>
+<text x="308" y="553" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">nvidia-smi topo -m — every GPU pair at the expected NVLink class</text>
 <rect x="264" y="566" width="712" height="46" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
 <text x="284" y="585" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold">5</text>
-<text x="308" y="585" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">NCCL test suite — the fabric, proven under load</text>
-<text x="308" y="604" font-size="11.5" fill="#9da7b3" text-anchor="start" font-weight="normal">all-reduce · all-gather · reduce-scatter — any correctness error fails it</text>
+<text x="308" y="585" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">NCCL test suite — required on HGX; on DGX with --require-nccl</text>
+<text x="308" y="604" font-size="11.5" fill="#9da7b3" text-anchor="start" font-weight="normal">all-reduce · all-gather · reduce-scatter — a test that ran and failed fails it</text>
 <rect x="264" y="616" width="712" height="28" rx="6" fill="#21262d" stroke="none" stroke-width="1.6"/>
 <text x="284" y="635" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold">6</text>
 <text x="308" y="635" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">sudo nvsm stress-test — the long one, 30–60 min (DGX only)</text>
@@ -48,20 +48,26 @@
 <text x="284" y="667" font-size="15" fill="#58a6ff" text-anchor="middle" font-weight="bold">7</text>
 <text x="308" y="667" font-size="14" fill="#e6edf3" text-anchor="start" font-weight="normal">sudo nvsm dump health — final health snapshot (DGX only)</text>
 <line x1="620" y1="688" x2="620" y2="708" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="240" y="712" width="372" height="74" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
-<text x="426" y="738" font-size="16" fill="#3fb950" text-anchor="middle" font-weight="bold">ALL CHECKS PASS</text>
-<text x="426" y="762" font-size="13.5" fill="#9da7b3" text-anchor="middle" font-weight="normal">green HEALTHY card for the folder</text>
-<rect x="628" y="712" width="372" height="74" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
-<text x="814" y="738" font-size="16" fill="#f85149" text-anchor="middle" font-weight="bold">ANYTHING FAILS</text>
-<text x="814" y="762" font-size="13.5" fill="#9da7b3" text-anchor="middle" font-weight="normal">red NOT HEALTHY card + details in the log</text>
+<rect x="240" y="712" width="184" height="74" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+<text x="332" y="740" font-size="15" fill="#3fb950" text-anchor="middle" font-weight="bold">HEALTHY</text>
+<text x="332" y="764" font-size="11" fill="#9da7b3" text-anchor="middle" font-weight="normal">every check passed on evidence</text>
+<rect x="432" y="712" width="184" height="74" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+<text x="524" y="740" font-size="15" fill="#f85149" text-anchor="middle" font-weight="bold">NOT HEALTHY</text>
+<text x="524" y="764" font-size="11" fill="#9da7b3" text-anchor="middle" font-weight="normal">something measured failed</text>
+<rect x="624" y="712" width="184" height="74" rx="10" fill="#161b22" stroke="#a371f7" stroke-width="1.6"/>
+<text x="716" y="740" font-size="15" fill="#a371f7" text-anchor="middle" font-weight="bold">INCOMPLETE</text>
+<text x="716" y="764" font-size="11" fill="#9da7b3" text-anchor="middle" font-weight="normal">evidence missing — reason given</text>
+<rect x="816" y="712" width="184" height="74" rx="10" fill="#161b22" stroke="#db6d28" stroke-width="1.6"/>
+<text x="908" y="740" font-size="15" fill="#db6d28" text-anchor="middle" font-weight="bold">UNREACHABLE</text>
+<text x="908" y="764" font-size="11" fill="#9da7b3" text-anchor="middle" font-weight="normal">step zero could not reach it</text>
 <line x1="620" y1="786" x2="620" y2="806" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="240" y="810" width="760" height="50" rx="10" fill="#161b22" stroke="#8b949e" stroke-width="1.6"/>
-<text x="620" y="831" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal">The stress test's own log file (StressTestLog*.nvsmlog)</text>
-<text x="620" y="851" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal">is copied into the host's folder automatically.</text>
+<text x="620" y="831" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal">A card named for the verdict (&lt;host&gt;-NOT-HEALTHY.png …) + the stress log</text>
+<text x="620" y="851" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal">and dump archive nvsm printed, copied into the host's folder.</text>
 <line x1="620" y1="860" x2="620" y2="880" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="240" y="884" width="760" height="50" rx="10" fill="#161b22" stroke="#8b949e" stroke-width="1.6"/>
 <text x="620" y="905" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal">One row per host lands in summary.csv — shaped like the tracker:</text>
-<text x="620" y="925" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal">Complete / Failed per check, plus a % Complete column.</text>
+<text x="620" y="925" font-size="14.5" fill="#e6edf3" text-anchor="middle" font-weight="normal">Complete / Failed / Skipped / Incomplete per check, plus % Complete.</text>
 <line x1="620" y1="934" x2="620" y2="954" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="400" y="958" width="440" height="46" rx="23" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
 <text x="620" y="987" font-size="17" fill="#3fb950" text-anchor="middle" font-weight="bold">Evidence ready to file</text>

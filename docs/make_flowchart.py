@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """DGX Vitals run flowchart — SVG/PNG generator (house style).
-Source of docs/flowchart.svg + docs/flowchart.png. Needs cairosvg (maintainer
-tool only; field users never run this)."""
+Source of docs/flowchart.svg + docs/flowchart.png, written next to this
+script. The PNG needs cairosvg or rsvg-convert (maintainer tool only; field
+users never run this)."""
+import os
+import shutil
+import subprocess
 W, H = 1240, 1048
 BG = "#0d1117"; BOX = "#161b22"; INNER = "#21262d"; LINE = "#8b949e"; TXT = "#e6edf3"
 SUB = "#9da7b3"; ACC = "#58a6ff"; GRN = "#3fb950"; RED = "#f85149"; AMB = "#d2a83c"
@@ -25,13 +29,13 @@ def arrow(x, y1, y2):
 
 CX = 620
 t(CX, 50, "DGX Vitals — how a run works", 30, TXT, weight="bold")
-t(CX, 80, "Family nickname: mimirs-test · Checks by profile — DGX or HGX · One evidence folder per host.", 15, SUB)
+t(CX, 80, "Checks by profile — DGX or HGX · One evidence folder per host · Fail closed: missing evidence is never HEALTHY.", 15, SUB)
 box(470, 102, 300, 46, stroke=ACC, r=23)
 t(CX, 131, "You run dgx-vitals.py", 17, TXT, weight="bold")
 arrow(CX, 148, 170)
 box(240, 172, 760, 58, stroke=AMB)
-t(CX, 197, "STEP 0 — recommended first: add  --dry-run", 16, AMB, weight="bold")
-t(CX, 219, "Prints the exact plan for every host. Touches nothing.", 14, SUB)
+t(CX, 197, "FIRST — preflight with  --check  (read-only: runs no test, writes nothing)", 16, AMB, weight="bold")
+t(CX, 219, "Per host: SSH, identity, sudo, nvsm, nccl-tests binaries, alerts, disk, clock. Fix what is NOT READY.", 13.5, SUB)
 arrow(CX, 230, 252)
 box(240, 254, 760, 96)
 t(CX, 280, "Pick how you run it", 16, TXT, weight="bold")
@@ -44,13 +48,13 @@ for x, lines in [(256, ["MANY HOSTS", "laptop + hosts.csv file"]),
 arrow(CX, 350, 372)
 box(240, 374, 760, 314, stroke=ACC)
 t(CX, 402, "For each host — in parallel, and safe to re-run", 16, TXT, weight="bold")
-t(CX, 424, "DGX profile runs all seven; HGX runs the shared core. FULLLOG is written as it goes.", 13, SUB)
+t(CX, 424, "Step zero checks identity first. DGX runs six checks (seven with --require-nccl); HGX four. FULLLOG is written as it goes.", 12.5, SUB)
 steps = [("Release check — DGX software version (OS version on HGX)", None),
          ("sudo nvsm show health — overall system health (DGX only)", None),
-         ("nvidia-smi -q — full GPU report (checks all 8 GPUs)", None),
-         ("nvidia-smi topo -m — NVLink fabric map", None),
-         ("NCCL test suite — the fabric, proven under load",
-          "all-reduce · all-gather · reduce-scatter — any correctness error fails it"),
+         ("nvidia-smi -q — full GPU report (expected GPU count)", None),
+         ("nvidia-smi topo -m — every GPU pair at the expected NVLink class", None),
+         ("NCCL test suite — required on HGX; on DGX with --require-nccl",
+          "all-reduce · all-gather · reduce-scatter — a test that ran and failed fails it"),
          ("sudo nvsm stress-test — the long one, 30–60 min (DGX only)", None),
          ("sudo nvsm dump health — final health snapshot (DGX only)", None)]
 y = 438
@@ -63,28 +67,39 @@ for i, (s, sub) in enumerate(steps, 1):
         t(308, y + 38, sub, 11.5, SUB, anchor="start")
     y += h + 4
 arrow(CX, 688, 710)
-box(240, 712, 372, 74, stroke=GRN)
-t(426, 738, "ALL CHECKS PASS", 16, GRN, weight="bold")
-t(426, 762, "green HEALTHY card for the folder", 13.5, SUB)
-box(628, 712, 372, 74, stroke=RED)
-t(814, 738, "ANYTHING FAILS", 16, RED, weight="bold")
-t(814, 762, "red NOT HEALTHY card + details in the log", 13.5, SUB)
+PUR = "#a371f7"; ORA = "#db6d28"
+for x, col, head, sub in [(240, GRN, "HEALTHY", "every check passed on evidence"),
+                          (432, RED, "NOT HEALTHY", "something measured failed"),
+                          (624, PUR, "INCOMPLETE", "evidence missing — reason given"),
+                          (816, ORA, "UNREACHABLE", "step zero could not reach it")]:
+    box(x, 712, 184, 74, stroke=col)
+    t(x + 92, 740, head, 15, col, weight="bold")
+    t(x + 92, 764, sub, 11, SUB)
 arrow(CX, 786, 808)
 box(240, 810, 760, 50)
-t(CX, 831, "The stress test's own log file (StressTestLog*.nvsmlog)", 14.5, TXT)
-t(CX, 851, "is copied into the host's folder automatically.", 14.5, TXT)
+t(CX, 831, "A card named for the verdict (&lt;host&gt;-NOT-HEALTHY.png …) + the stress log", 14.5, TXT)
+t(CX, 851, "and dump archive nvsm printed, copied into the host's folder.", 14.5, TXT)
 arrow(CX, 860, 882)
 box(240, 884, 760, 50)
 t(CX, 905, "One row per host lands in summary.csv — shaped like the tracker:", 14.5, TXT)
-t(CX, 925, "Complete / Failed per check, plus a % Complete column.", 14.5, TXT)
+t(CX, 925, "Complete / Failed / Skipped / Incomplete per check, plus % Complete.", 14.5, TXT)
 arrow(CX, 934, 956)
 box(400, 958, 440, 46, stroke=GRN, r=23)
 t(CX, 987, "Evidence ready to file", 17, GRN, weight="bold")
 o.append("</svg>")
 svg = "\n".join(o)
-open("/home/hatch/workspace/moonlite-validation/docs/flowchart.svg", "w").write(svg)
-import cairosvg
-cairosvg.svg2png(bytestring=svg.encode(),
-                 write_to="/home/hatch/workspace/moonlite-validation/docs/flowchart.png",
-                 scale=2)
-print("flowchart regenerated (7-step profile layout)")
+HERE = os.path.dirname(os.path.abspath(__file__))
+svg_path = os.path.join(HERE, "flowchart.svg")
+png_path = os.path.join(HERE, "flowchart.png")
+with open(svg_path, "w") as f:
+    f.write(svg + "\n")
+try:
+    import cairosvg
+    cairosvg.svg2png(bytestring=svg.encode(), write_to=png_path, scale=2)
+except ImportError:
+    if not shutil.which("rsvg-convert"):
+        raise SystemExit("flowchart.svg written; install cairosvg or "
+                         "rsvg-convert to render flowchart.png")
+    subprocess.run(["rsvg-convert", "-z", "2", "-o", png_path, svg_path],
+                   check=True)
+print("flowchart regenerated (step zero, verdict-named cards, four verdicts)")

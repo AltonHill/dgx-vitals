@@ -1,0 +1,396 @@
+# Command: nvsm show health
+# Started: 2026-11-11 17:43:08
+
+Progress bar is not supported for this terminal. Please wait for results
+Running standard show health
+
+Info
+----
+Timestamp           :     Wed Nov 11 17:43:08 UTC 2026
+Version             :     25.09.07
+
+Checks
+------
+Verify installed DIMM memory sticks.................................. Healthy
+Verify disk controllers.............................................. Healthy
+Verify logical resource of NVMe devices.............................. Healthy
+Verify logical resource of NIC devices............................... Healthy
+Verify Network Adapters.............................................. Healthy
+Verify Cluster NIC active link technology consistency................ Healthy
+Verify Storage NIC active link technology consistency................ Healthy
+    Found InfiniBand for link/s PCI0000_cc_00_0, PCI0000_53_00_0
+    Found Ethernet for link/s PCI0000_cc_00_1, PCI0000_53_00_1
+Verify Cluster NIC devices consistency............................... Healthy
+Verify Storage NIC devices consistency............................... Healthy
+Verify installed GPU's............................................... Healthy
+Verify installed VGA Controllers..................................... Healthy
+Presence of NVSwitch controllers on PCI bus.......................... Healthy
+Verify PCIe switches................................................. Healthy
+Verify DIMM part number.............................................. Unhealthy
+    Mismatch in DIMM 'CPU0_DIMM_A1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_A2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_B1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_B2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_C1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_C2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_D1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_D2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_E1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_E2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_F1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_F2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_G1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_G2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_H1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU0_DIMM_H2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_A1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_A2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_B1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_B2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_C1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_C2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_D1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_D2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_E1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_E2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_F1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_F2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_G1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_G2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_H1' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+    Mismatch in DIMM 'CPU1_DIMM_H2' part number, expected is '[HMCG94AHBRA48* M321R8GA0EB2-* MTC40F2046S1RC64BD2*]' found is 'MTC40F2046S1RC64BH1 2SKK'
+Verify DIMM vendors.................................................. Healthy
+Verify DIMM vendors consistency...................................... Healthy
+Verify chassis [Serial:1954126000062] fan presence................... Healthy
+Verify GPUs VBIOS version consistency................................ Healthy
+VBIOS Version [GPU0 [00000000:1A:00.0]] [97.10.64.00.0C]
+Inforom Storage Version [GPU0 [00000000:1A:00.0]] [G540.0216.00.03]
+VBIOS Version [GPU1 [00000000:3C:00.0]] [97.10.64.00.0C]
+Inforom Storage Version [GPU1 [00000000:3C:00.0]] [G540.0216.00.03]
+VBIOS Version [GPU2 [00000000:62:00.0]] [97.10.64.00.0C]
+Inforom Storage Version [GPU2 [00000000:62:00.0]] [G540.0216.00.03]
+VBIOS Version [GPU3 [00000000:73:00.0]] [97.10.64.00.0C]
+Inforom Storage Version [GPU3 [00000000:73:00.0]] [G540.0216.00.03]
+VBIOS Version [GPU4 [00000000:9A:00.0]] [97.10.64.00.0C]
+Inforom Storage Version [GPU4 [00000000:9A:00.0]] [G540.0216.00.03]
+VBIOS Version [GPU5 [00000000:BC:00.0]] [97.10.64.00.0C]
+Inforom Storage Version [GPU5 [00000000:BC:00.0]] [G540.0216.00.03]
+VBIOS Version [GPU6 [00000000:DF:00.0]] [97.10.64.00.0C]
+Inforom Storage Version [GPU6 [00000000:DF:00.0]] [G540.0216.00.03]
+VBIOS Version [GPU7 [00000000:F0:00.0]] [97.10.64.00.0C]
+Inforom Storage Version [GPU7 [00000000:F0:00.0]] [G540.0216.00.03]
+Verify GPUs SKU Type consistency..................................... Healthy
+Quick health check of GPU using DCGM................................. Healthy
+    Found 0 device(s) recommended for blacklist:
+Number of logical CPU cores[256]..................................... Healthy
+    Observed 256 logical CPU cores, matching expectations
+Status of volumes.................................................... Healthy
+Check SMART status of NVMe devices................................... Healthy
+Verify NVIDIA ConnectX devices firmware version consistency.......... Healthy
+Verify GPU's identified using nvidia-smi............................. Healthy
+Verify installed NVMe devices........................................ Healthy
+Verify chassis [Serial:1954126000062] power supply presence.......... Healthy
+Check PSU Info (Vendor, Model) for Consistency....................... Healthy
+GPU link speed [0000:bc:00.0][64GT/s]................................ Healthy
+GPU link width [0000:bc:00.0][x16]................................... Healthy
+GPU link speed [0000:df:00.0][64GT/s]................................ Healthy
+GPU link width [0000:df:00.0][x16]................................... Healthy
+GPU link speed [0000:f0:00.0][64GT/s]................................ Healthy
+GPU link width [0000:f0:00.0][x16]................................... Healthy
+GPU link speed [0000:1a:00.0][64GT/s]................................ Healthy
+GPU link width [0000:1a:00.0][x16]................................... Healthy
+GPU link speed [0000:3c:00.0][64GT/s]................................ Healthy
+GPU link width [0000:3c:00.0][x16]................................... Healthy
+GPU link speed [0000:62:00.0][64GT/s]................................ Healthy
+GPU link width [0000:62:00.0][x16]................................... Healthy
+GPU link speed [0000:73:00.0][64GT/s]................................ Healthy
+GPU link width [0000:73:00.0][x16]................................... Healthy
+GPU link speed [0000:9a:00.0][64GT/s]................................ Healthy
+GPU link width [0000:9a:00.0][x16]................................... Healthy
+NVMe link speed [0000:4d:00.0][32GT/s]............................... Healthy
+NVMe link width [0000:4d:00.0][x4]................................... Healthy
+NVMe link speed [0000:4e:00.0][32GT/s]............................... Healthy
+NVMe link width [0000:4e:00.0][x4]................................... Healthy
+NVMe link speed [0000:4f:00.0][32GT/s]............................... Healthy
+NVMe link width [0000:4f:00.0][x4]................................... Healthy
+NVMe link speed [0000:50:00.0][32GT/s]............................... Healthy
+NVMe link width [0000:50:00.0][x4]................................... Healthy
+NVMe link speed [0000:a6:00.0][16GT/s]............................... Healthy
+NVMe link width [0000:a6:00.0][x4]................................... Healthy
+NVMe link speed [0000:a7:00.0][16GT/s]............................... Healthy
+NVMe link width [0000:a7:00.0][x4]................................... Healthy
+NVMe link speed [0000:cd:00.0][32GT/s]............................... Healthy
+NVMe link width [0000:cd:00.0][x4]................................... Healthy
+NVMe link speed [0000:ce:00.0][32GT/s]............................... Healthy
+NVMe link width [0000:ce:00.0][x4]................................... Healthy
+NVMe link speed [0000:cf:00.0][32GT/s]............................... Healthy
+NVMe link width [0000:cf:00.0][x4]................................... Healthy
+NVMe link speed [0000:d0:00.0][32GT/s]............................... Healthy
+NVMe link width [0000:d0:00.0][x4]................................... Healthy
+NetworkAdapter link speed [0000:17:00.0][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:17:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:17:00.1][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:17:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:27:00.0][16GT/s]..................... Healthy
+NetworkAdapter link width [0000:27:00.0][x2]......................... Healthy
+NetworkAdapter link speed [0000:27:00.1][16GT/s]..................... Healthy
+NetworkAdapter link width [0000:27:00.1][x2]......................... Healthy
+NetworkAdapter link speed [0000:27:00.2][16GT/s]..................... Healthy
+NetworkAdapter link width [0000:27:00.2][x2]......................... Healthy
+NetworkAdapter link speed [0000:27:00.3][16GT/s]..................... Healthy
+NetworkAdapter link width [0000:27:00.3][x2]......................... Healthy
+NetworkAdapter link speed [0000:2a:00.0][2.5GT/s].................... Healthy
+NetworkAdapter link width [0000:2a:00.0][x1]......................... Healthy
+NetworkAdapter link speed [0000:39:00.0][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:39:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:39:00.1][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:39:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:53:00.0][32GT/s]..................... Healthy
+NetworkAdapter link width [0000:53:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:53:00.1][32GT/s]..................... Healthy
+NetworkAdapter link width [0000:53:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:5f:00.0][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:5f:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:5f:00.1][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:5f:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:70:00.0][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:70:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:70:00.1][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:70:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:97:00.0][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:97:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:97:00.1][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:97:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:b9:00.0][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:b9:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:b9:00.1][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:b9:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:cc:00.0][32GT/s]..................... Healthy
+NetworkAdapter link width [0000:cc:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:cc:00.1][32GT/s]..................... Healthy
+NetworkAdapter link width [0000:cc:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:dc:00.0][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:dc:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:dc:00.1][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:dc:00.1][x16]........................ Healthy
+NetworkAdapter link speed [0000:ed:00.0][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:ed:00.0][x16]........................ Healthy
+NetworkAdapter link speed [0000:ed:00.1][64GT/s]..................... Healthy
+NetworkAdapter link width [0000:ed:00.1][x16]........................ Healthy
+Check GPUDirect Topology information for consistency................. Healthy
+NVIDIA Driver Version [580.178.04]
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 1][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 4][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 5][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 8][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 11][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 12][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 14][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 17][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 0][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 6][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 7][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 9][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 10][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 16][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 3][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 15][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 2][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU0 [0000:1a:00.0] Link 13][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 12][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 3][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 4][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 11][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 16][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 17][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 6][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 9][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 13][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 14][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 15][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 0][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 7][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 5][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 8][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 10][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 1][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU1 [0000:3c:00.0] Link 2][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 6][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 10][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 16][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 2][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 3][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 4][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 5][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 0][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 7][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 11][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 12][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 14][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 1][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 8][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 9][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 13][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 15][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU2 [0000:62:00.0] Link 17][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 13][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 6][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 9][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 8][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 11][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 14][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 16][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 3][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 5][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 7][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 15][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 0][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 4][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 10][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 12][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 17][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 1][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU3 [0000:73:00.0] Link 2][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 3][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 5][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 7][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 8][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 9][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 11][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 2][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 4][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 6][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 0][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 13][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 14][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 15][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 17][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 12][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 10][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 16][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU4 [0000:9a:00.0] Link 1][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 6][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 14][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 15][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 10][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 12][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 13][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 1][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 2][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 4][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 9][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 16][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 0][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 3][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 7][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 8][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 5][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 11][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU5 [0000:bc:00.0] Link 17][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 7][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 8][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 10][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 0][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 2][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 3][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 4][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 17][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 5][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 6][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 13][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 14][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 1][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 12][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 16][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 9][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 11][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU6 [0000:df:00.0] Link 15][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 0][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 1][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 3][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 10][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 15][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 2][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 5][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 7][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 9][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 11][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 12][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 6][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 13][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 16][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 17][53.125 GB/s]..... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 4][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 8][53.125 GB/s]...... Healthy
+Checking NVLink speed [GPU7 [0000:f0:00.0] Link 14][53.125 GB/s]..... Healthy
+Check BMC sensor thresholds for chassis [Serial: 1954126000062] ..... Healthy
+    Checked 282 sensor values against BMC thresholds.
+BMC Firmware Revision [1.01.44]
+HGX Management Controller Firmware Revision [Version Unavailable]
+BaseOS Version [7.5.0]
+BIOS Version [01.00.08]
+Linux kernel version [6.8.0-138-generic]
+System Uptime [up 11 hours, 9 minutes]
+Serial Number [1954126000062]
+Chassis [1954126000062] Power Supply Info
+    [PSU0] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R0401631366] Firmware[Firmware Error]
+    [PSU1] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R04016314Q7] Firmware[07.30.2e.36.2e.30.2e.36]
+    [PSU2] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R040163158Z] Firmware[07.30.2e.36.2e.30.2e.36]
+    [PSU3] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R04016314V5] Firmware[07.30.2e.36.2e.30.2e.36]
+    [PSU4] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R04016314M8] Firmware[07.30.2e.36.2e.30.2e.36]
+    [PSU5] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R040163149J] Firmware[07.30.2e.36.2e.30.2e.36]
+    [PSU6] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R04016314H7] Firmware[07.30.2e.36.2e.30.2e.36]
+    [PSU7] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R04016313BR] Firmware[0f.47.35.34.30.2e.30.32.31.36.2e.30.30.2e.30.33]
+    [PSU8] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R04016315KG] Firmware[0f.47.35.34.30.2e.30.32.31.36.2e.30.30.2e.30.33]
+    [PSU9] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R040163155G] Firmware[08.30.31.2e.30.31.2e.34.34]
+    [PSU10] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R04016314VA] Firmware[07.30.2e.31.2e.33.2e.31]
+    [PSU11] Vendor[Liteon Power] Model[SP-2552-6R] Serial[6PL6R040163152T] Firmware[07.30.2e.31.2e.30.2e.38]
+
+System Summary
+--------------
+    Product Name:DGXB300
+    Manufacturer:NVIDIA
+    Serial Number:1954126000062
+    Uptime:up 11 hours, 9 minutes
+
+MotherBoard:
+    BIOS Version:01.00.08
+    Serial Number:5550B902000163912E
+
+BMC:
+    Firmware Version:1.01.44
+    IPMI Version:2.0
+
+HGX Management Controller:
+    Product Name:GPU Base board
+    Firmware Version:Version Unavailable
+
+GPU:
+    NVIDIA Driver Version:580.178.04
+    Product Name:NVIDIA B300 SXM6 AC
+    VBIOS Version(s):97.10.64.00.0C
+
+Software:
+    BaseOS Version:7.5.0
+    Kernel Version:6.8.0-138-generic
+    OS Version:Ubuntu 24.04.4 LTS (Noble Numbat)
+
+Health Summary
+--------------
+
+259 out of 260 checks are healthy
+1 out of 260 checks are unhealthy
+0 out of 260 checks are unknown
+0 out of 260 checks are informational
+0 out of 260 checks are disabled
+0 out of 260 checks are skipped
+Overall system status is unhealthy
+
+Problem detected.
+
+
+1. Please run 'sudo nvsm dump health'
+2. Please open a case with NVIDIA Enterprise Support at this address https://nvid.nvidia.com/dashboard/
+3. Attach the log file from /tmp/nvsm-health-<hostname>-<timestamp>.tar.xz
+
+# Finished: 2026-11-11 17:45:57  exit_code=0  duration=169s

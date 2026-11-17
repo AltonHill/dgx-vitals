@@ -1,0 +1,2 @@
+Hostname,Release,NVSM Health,NVIDIA-SMI Query,NVLink Topology,NCCL Tests,NVSM Stress Test,NVSM Dump Health,% Complete,Overall,Notes
+fx-w09-prod-hv-01,Complete,Failed,Complete,Complete,Failed,Complete,Complete,71,NOT HEALTHY,"NVSM Show Health: output mentions: unhealthy; NCCL Tests: all_gather: exit 134; not installed: all_reduce, reduce_scatter (nccl-tests partially provisioned)"

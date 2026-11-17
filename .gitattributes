@@ -1,0 +1,2 @@
+# Corpus fixtures are byte-faithful field evidence (CRLF intact, sha256 in PROVENANCE.md)
+tests/fixtures/** binary

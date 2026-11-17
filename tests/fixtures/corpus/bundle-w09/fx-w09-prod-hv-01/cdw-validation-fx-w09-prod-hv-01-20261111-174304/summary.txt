@@ -1,0 +1,10 @@
+CDW validation run on fx-w09-prod-hv-01 at 20261111-174304
+--------------------------------------------------------------
+01-nvidia-smi            exit=0         1s   nvidia-smi
+02-nvidia-smi-topo       exit=0         2s   nvidia-smi topo -m
+03-nvsm-versions         exit=0         1s   nvsm show versions
+04-nvsm-health           exit=0       169s   nvsm show health
+05-nvsm-stress-test      exit=0      1847s   nvsm stress-test --no-prompt
+06-nvsm-dump-health      exit=0      2483s   nvsm dump health
+--------------------------------------------------------------
+Failed commands: 0
