@@ -342,8 +342,8 @@ python3 tracker_build.py \
   - an UNREACHABLE attempt never overrides results;
   - an identity mismatch stands until a later run whose own step zero
     confirmed the host.
-- `--bundles DIR`: optional. A harvest root of per-host validation
-  bundles produced outside dgx-vitals
+- `--bundles DIR`: optional. A harvest root of harvested validation
+  bundles, one per host, produced outside dgx-vitals
   (`<host>/cdw-validation-<host>-<timestamp>.tar.gz`, newest per host).
 - `--hosts CSV`: the fleet list from Step 1. It sets the row order and
   fills the BMC IP / LAN IP columns. Hosts with no results get a **NO

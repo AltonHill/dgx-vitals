@@ -288,8 +288,8 @@ host's health card embedded in its row:
   from runners before v2.0. An **NCCL not tested** line lists every host
   without an NCCL fabric result and why. One-off rulings go in a CSV
   (`--adjudications`, columns `hostname,step,state,note`).
-- It can also fold in harvested `cdw-validation` bundles (`--bundles
-  DIR`). dgx-vitals wins where both exist, and the Source column always
+- It can also fold in harvested validation bundles (`--bundles DIR`;
+  the bundle layout is in the Operators Guide). dgx-vitals wins where both exist, and the Source column always
   says which pipeline produced a row. `--bundle-out FILE.tar.gz` packs the
   sheet plus every source artifact for ferrying. A CSV of the same rows
   is always written beside the sheet.
